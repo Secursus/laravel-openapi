@@ -7,6 +7,7 @@ use GoldSpecDigital\ObjectOrientedOAS\Objects\Operation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Vyuldashev\LaravelOpenApi\Annotations\Operation as OperationAnnotation;
+use Vyuldashev\LaravelOpenApi\Builders\Components\CodeSampleBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\ExtensionsBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\CallbacksBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\ParametersBuilder;
@@ -72,6 +73,23 @@ class OperationsBuilder
                 ->requestBody($requestBody)
                 ->responses(...$responses)
                 ->callbacks(...$callbacks);
+
+            $code_sample_annotation = $actionAnnotations->where('id', 'codeSample')->first();
+            if ($code_sample_annotation) {
+                $code_sample_array = [];
+                foreach ($code_sample_annotation->tags as $code_key) {
+                    $code_sample_build = CodeSampleBuilder::build(
+                        $code_key,
+                        $route
+                    );
+
+                    if (!empty($code_sample_build)) {
+                        $code_sample_array[] = $code_sample_build;
+                    }
+                }
+
+                $operation->x('code-samples', $code_sample_array);
+            }
 
             $this->extensionsBuilder->build($operation, $actionAnnotations);
 
