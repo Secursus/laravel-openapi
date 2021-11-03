@@ -104,34 +104,42 @@ class CodeSampleBuilder
         $base_url = substr(config('openapi.collections.default.servers')[0]['url'], 0, -1);
 
         if ($type === "curl") {
+            $bearer_code = '';
+            if ($bearer) {
+                $bearer_code = '
+-H "Authorization: Bearer XXXXXXXXXXXXXXX" \ ';
+            }
+
             if ($route->method === 'get') {
-                return 'curl -k -i -H "Content-Type: application/json" \
--H "Authorization: Bearer XXXXXXXXXXXXXXX" \
+                return 'curl -k -i -H "Content-Type: application/json" \ ' . $bearer_code . '
 -X GET "' . $base_url . $route->uri .'"';
             }
 
             if ($route->method === 'post' || $route->method === 'put') {
-                return 'curl -k -i -H "Content-Type: application/json" \
--H "Authorization: Bearer XXXXXXXXXXXXXXX" \
+                return 'curl -k -i -H "Content-Type: application/json" \ ' . $bearer_code . '
 -X ' . strtoupper($route->method) . ' -d \'{"field_1":"xyz","field_2":"xyz"}\' \
 "' . $base_url . $route->uri .'"';
             }
 
             if ($route->method === 'delete') {
-                return 'curl -k -i -H "Content-Type: application/json" \
--H "Authorization: Bearer XXXXXXXXXXXXXXX" \
+                return 'curl -k -i -H "Content-Type: application/json" \ ' . $bearer_code . '
 -X DELETE "' . $base_url . $route->uri .'"';
             }
         }
 
         if ($type === "php") {
+            $bearer_code = '';
+            if ($bearer) {
+                $bearer_code = '
+    \'Authorization\' => \'Bearer XXXXXXXXXXXXXXX\',';
+            }
+
             if ($route->method === 'get') {
                 return 'setUrl(\'' . $base_url . $route->uri .'\');
 $request->setMethod(HTTP_METH_GET);
 
 $request->setHeaders([
-    \'cache-control\' => \'no-cache\',
-    \'Authorization\' => \'Bearer XXXXXXXXXXXXXXX\',
+    \'cache-control\' => \'no-cache\',' . $bearer_code . '
     \'content-type\' => \'application/json\'
 ]);
 
@@ -149,8 +157,7 @@ try {
 $request->setMethod(' . $method . ');
 
 $request->setHeaders([
-    \'cache-control\' => \'no-cache\',
-    \'Authorization\' => \'Bearer XXXXXXXXXXXXXXX\',
+    \'cache-control\' => \'no-cache\',' . $bearer_code . '
     \'content-type\' => \'application/json\'
 ]);
 
@@ -169,8 +176,7 @@ try {
 $request->setMethod(HTTP_METH_DELETE);
 
 $request->setHeaders([
-    \'cache-control\' => \'no-cache\',
-    \'Authorization\' => \'Bearer XXXXXXXXXXXXXXX\',
+    \'cache-control\' => \'no-cache\',' . $bearer_code . '
     \'content-type\' => \'application/json\'
 ]);
 
@@ -185,6 +191,11 @@ try {
         }
 
         if ($type === "node-js") {
+            $bearer_code = '';
+            if ($bearer) {
+                $bearer_code = '
+        \'Authorization\': \'Bearer XXXXXXXXXXXXXXX\',';
+            }
             if ($route->method === 'get') {
                 return 'var request = require("request");
 
@@ -193,8 +204,7 @@ var options = {
     url: \'' . $base_url . $route->uri .'\',
     headers:
     {
-        \'cache-control\': \'no-cache\',
-        \'Authorization\': \'Bearer XXXXXXXXXXXXXXX\'
+        \'cache-control\': \'no-cache\',' . $bearer_code . '
         \'content-type\': \'application/json\'
     }
 };
@@ -213,8 +223,7 @@ var options = {
     url: \'' . $base_url . $route->uri .'\',
     headers:
     {
-        \'cache-control\': \'no-cache\',
-        \'Authorization\': \'Bearer XXXXXXXXXXXXXXX\'
+        \'cache-control\': \'no-cache\',' . $bearer_code . '
         \'content-type\': \'application/json\'
     }
     body: { field_1: \'xyz\', field_2: \'abc\' },
@@ -235,8 +244,7 @@ var options = {
     url: \'' . $base_url . $route->uri .'\',
     headers:
     {
-        \'cache-control\': \'no-cache\',
-        \'Authorization\': \'Bearer XXXXXXXXXXXXXXX\'
+        \'cache-control\': \'no-cache\',' . $bearer_code . '
         \'content-type\': \'application/json\'
     }
 };
@@ -249,6 +257,12 @@ request(options, function (error, response, body) {
         }
 
         if ($type === "node-xhr") {
+            $bearer_code = '';
+            if ($bearer) {
+                $bearer_code = '
+xhr.setRequestHeader("Authorization", "Bearer XXXXXXXXXXXXXXX");';
+            }
+
             if ($route->method === 'get') {
                 return 'var data = null;
 
@@ -261,9 +275,8 @@ xhr.addEventListener("readystatechange", function () {
     }
 });
 
-xhr.open("GET", "' . $base_url . $route->uri .'");
+xhr.open("GET", "' . $base_url . $route->uri .'");' . $bearer_code . '
 xhr.setRequestHeader("content-type", "application/json");
-xhr.setRequestHeader("Authorization", "Bearer XXXXXXXXXXXXXXX");
 xhr.setRequestHeader("cache-control", "no-cache");
 
 xhr.send(data);';
@@ -285,8 +298,7 @@ xhr.addEventListener("readystatechange", function () {
 });
 
 xhr.open("' . strtoupper($route->method) . '", "' . $base_url . $route->uri .'");
-xhr.setRequestHeader("content-type", "application/json");
-xhr.setRequestHeader("Authorization", "Bearer XXXXXXXXXXXXXXX");
+xhr.setRequestHeader("content-type", "application/json");' . $bearer_code . '
 xhr.setRequestHeader("cache-control", "no-cache");
 
 xhr.send(data);';
@@ -305,8 +317,7 @@ xhr.addEventListener("readystatechange", function () {
 });
 
 xhr.open("DELETE", "' . $base_url . $route->uri .'");
-xhr.setRequestHeader("content-type", "application/json");
-xhr.setRequestHeader("Authorization", "Bearer XXXXXXXXXXXXXXX");
+xhr.setRequestHeader("content-type", "application/json");' . $bearer_code . '
 xhr.setRequestHeader("cache-control", "no-cache");
 
 xhr.send(data);';
@@ -314,6 +325,12 @@ xhr.send(data);';
         }
 
         if ($type === "node-jquery") {
+            $bearer_code = '';
+            if ($bearer) {
+                $bearer_code = '
+        "Authorization": "Bearer XXXXXXXXXXXXXXX",';
+            }
+
             if ($route->method === 'get') {
                 return 'var settings = {
     "async": true,
@@ -321,8 +338,7 @@ xhr.send(data);';
     "url": "' . $base_url . $route->uri .'",
     "method": "GET",
     "headers": {
-        "content-type": "application/json",
-        "Authorization": "Bearer XXXXXXXXXXXXXXX",
+        "content-type": "application/json",' . $bearer_code . '
         "cache-control": "no-cache"
     }
 }
@@ -340,8 +356,7 @@ var settings = {
     "url": "' . $base_url . $route->uri .'",
     "method": "' . strtoupper($route->method) . '",
     "headers": {
-        "content-type": "application/json",
-        "Authorization": "Bearer XXXXXXXXXXXXXXX",
+        "content-type": "application/json",' . $bearer_code . '
         "cache-control": "no-cache"
     },
     "processData": false,
@@ -360,8 +375,7 @@ $.ajax(settings).done(function (response) {
     "url": "' . $base_url . $route->uri .'",
     "method": "DELETE",
     "headers": {
-        "content-type": "application/json",
-        "Authorization": "Bearer XXXXXXXXXXXXXXX",
+        "content-type": "application/json",' . $bearer_code . '
         "cache-control": "no-cache"
     }
 }
@@ -373,14 +387,19 @@ $.ajax(settings).done(function (response) {
         }
 
         if ($type === "python") {
+            $bearer_code = '';
+            if ($bearer) {
+                $bearer_code = '
+    \'Authorization\': "Bearer XXXXXXXXXXXXXXX",';
+            }
+
             if ($route->method === 'get') {
                 return 'import requests
 
 url = "' . $base_url . $route->uri .'"
 
 headers = {
-    \'content-type\': "application/json",
-    \'Authorization\': "Bearer XXXXXXXXXXXXXXX",
+    \'content-type\': "application/json",' . $bearer_code . '
     \'cache-control\': "no-cache"
 }
 
@@ -397,8 +416,7 @@ url = "' . $base_url . $route->uri .'"
 
 payload = json.dumps( {"field_1": "xyz","field_2": "abc"} )
 headers = {
-    \'content-type\': "application/json",
-    \'Authorization\': "Bearer XXXXXXXXXXXXXXX",
+    \'content-type\': "application/json",' . $bearer_code . '
     \'cache-control\': "no-cache"
 }
 
@@ -414,8 +432,7 @@ url = "' . $base_url . $route->uri .'"
 
 
 headers = {
-    \'content-type\': "application/json",
-    \'Authorization\': "Bearer XXXXXXXXXXXXXXX",
+    \'content-type\': "application/json",' . $bearer_code . '
     \'cache-control\': "no-cache"
 }
 
@@ -426,18 +443,22 @@ print(response.text)';
         }
 
         if ($type === "java") {
+            $bearer_code = '';
+            if ($bearer) {
+                $bearer_code = '
+.header("Authorization", "Bearer XXXXXXXXXXXXXXX")';
+            }
+
             if ($route->method === 'get') {
                 return 'HttpResponse response = Unirest.get("' . $base_url . $route->uri .'")
-.header("content-type", "application/json")
-.header("Authorization", "Bearer XXXXXXXXXXXXXXX")
+.header("content-type", "application/json")' . $bearer_code . '
 .header("cache-control", "no-cache")
 .asString();';
             }
 
             if ($route->method === 'post' || $route->method === 'put') {
                 return 'HttpResponse response = Unirest.' . $route->method . '("' . $base_url . $route->uri .'")
-.header("content-type", "application/json")
-.header("Authorization", "Bearer XXXXXXXXXXXXXXX")
+.header("content-type", "application/json")' . $bearer_code . '
 .header("cache-control", "no-cache")
 .body("{\"field_1\":\"xyz\",\"field_2\":\"abc\"}")
 .asString();';
@@ -445,19 +466,23 @@ print(response.text)';
 
             if ($route->method === 'delete') {
                 return 'HttpResponse response = Unirest.delete("' . $base_url . $route->uri .'")
-.header("content-type", "application/json")
-.header("Authorization", "Bearer XXXXXXXXXXXXXXX")
+.header("content-type", "application/json")' . $bearer_code . '
 .header("cache-control", "no-cache")
 .asString();';
             }
         }
 
         if ($type === "csharp") {
+            $bearer_code = '';
+            if ($bearer) {
+                $bearer_code = '
+request.AddHeader("Authorization", "Bearer XXXXXXXXXXXXXXX");';
+            }
+
             if ($route->method === 'get') {
                 return 'var client = new RestClient("' . $base_url . $route->uri . '");
 var request = new RestRequest(Method.GET);
-request.AddHeader("cache-control", "no-cache");
-request.AddHeader("Authorization", "Bearer XXXXXXXXXXXXXXX");
+request.AddHeader("cache-control", "no-cache");' . $bearer_code . '
 request.AddHeader("content-type", "application/json");
 IRestResponse response = client.Execute(request);';
             }
@@ -465,8 +490,7 @@ IRestResponse response = client.Execute(request);';
             if ($route->method === 'post' || $route->method === 'put') {
                 return 'var client = new RestClient("' . $base_url . $route->uri . '");
 var request = new RestRequest(Method.' . strtoupper($route->method) . ');
-request.AddHeader("cache-control", "no-cache");
-request.AddHeader("Authorization", "Bearer XXXXXXXXXXXXXXX");
+request.AddHeader("cache-control", "no-cache");' . $bearer_code . '
 request.AddHeader("content-type", "application/json");
 request.AddParameter("application/json", "{\"field_1\":\"xyz\",\"field_2\":\"abc\"}", ParameterType.RequestBody);
 IRestResponse response = client.Execute(request);';
@@ -475,19 +499,23 @@ IRestResponse response = client.Execute(request);';
             if ($route->method === 'delete') {
                 return 'var client = new RestClient("' . $base_url . $route->uri . '");
 var request = new RestRequest(Method.DELETE);
-request.AddHeader("cache-control", "no-cache");
-request.AddHeader("Authorization", "Bearer XXXXXXXXXXXXXXX");
+request.AddHeader("cache-control", "no-cache");' . $bearer_code . '
 request.AddHeader("content-type", "application/json");
 IRestResponse response = client.Execute(request);';
             }
         }
 
         if ($type === "objective") {
+            $bearer_code = '';
+            if ($bearer) {
+                $bearer_code = '
+                        @"Authorization": @"Bearer XXXXXXXXXXXXXXX",';
+            }
+
             if ($route->method === 'get') {
                 return '#import
 
-NSDictionary *headers = @{ @"content-type": @"application/json",
-                        @"Authorization": @"Bearer XXXXXXXXXXXXXXX",
+NSDictionary *headers = @{ @"content-type": @"application/json",' . $bearer_code . '
                         @"cache-control": @"no-cache";
 
 NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"' . $base_url . $route->uri . '"]
@@ -512,8 +540,7 @@ NSURLSessionDataTask *dataTask =   [session dataTaskWithRequest:request
             if ($route->method === 'post' || $route->method === 'put') {
                 return '#import
 
-NSDictionary *headers = @{ @"content-type": @"application/json",
-                        @"Authorization": @"Bearer XXXXXXXXXXXXXXX",
+NSDictionary *headers = @{ @"content-type": @"application/json",' . $bearer_code . '
                         @"cache-control": @"no-cache" };
 NSDictionary *parameters = @{ @"field_1": @"xyz",
                             @"field_2": @"abc" };
@@ -543,8 +570,7 @@ NSURLSessionDataTask *dataTask =   [session dataTaskWithRequest:request
             if ($route->method === 'delete') {
                 return '#import
 
-NSDictionary *headers = @{ @"content-type": @"application/json",
-                        @"Authorization": @"Bearer XXXXXXXXXXXXXXX",
+NSDictionary *headers = @{ @"content-type": @"application/json",' . $bearer_code . '
                         @"cache-control": @"no-cache" };
 
 NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"' . $base_url . $route->uri . '"]
@@ -568,12 +594,17 @@ NSURLSessionDataTask *dataTask =   [session dataTaskWithRequest:request
         }
 
         if ($type === "swift") {
+            $bearer_code = '';
+            if ($bearer) {
+                $bearer_code = '
+    "Authorization": "Bearer XXXXXXXXXXXXXXX",';
+            }
+
             if ($route->method === 'get') {
                 return 'import Foundation
 
 let headers = [
-    "content-type": "application/json",
-    "Authorization": "Bearer XXXXXXXXXXXXXXX",
+    "content-type": "application/json",' . $bearer_code . '
     "cache-control": "no-cache"
 ]
 
@@ -600,8 +631,7 @@ dataTask.resume()';
                 return 'import Foundation
 
 let headers = [
-    "content-type": "application/json",
-    "Authorization": "Bearer XXXXXXXXXXXXXXX",
+    "content-type": "application/json",' . $bearer_code . '
     "cache-control": "no-cache"
 ]
 let parameters = [
@@ -635,8 +665,7 @@ dataTask.resume()';
                 return 'import Foundation
 
 let headers = [
-    "content-type": "application/json",
-    "Authorization": "Bearer XXXXXXXXXXXXXXX",
+    "content-type": "application/json",' . $bearer_code . '
     "cache-control": "no-cache"
 ]
 
