@@ -13,6 +13,7 @@ use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\CallbacksBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\ParametersBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\RequestBodyBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\ResponsesBuilder;
+use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\SecurityBuilder;
 use Vyuldashev\LaravelOpenApi\RouteInformation;
 
 class OperationsBuilder
@@ -22,19 +23,22 @@ class OperationsBuilder
     protected $requestBodyBuilder;
     protected $responsesBuilder;
     protected $extensionsBuilder;
+    protected $securityBuilder;
 
     public function __construct(
         CallbacksBuilder $callbacksBuilder,
         ParametersBuilder $parametersBuilder,
         RequestBodyBuilder $requestBodyBuilder,
         ResponsesBuilder $responsesBuilder,
-        ExtensionsBuilder $extensionsBuilder
+        ExtensionsBuilder $extensionsBuilder,
+        SecurityBuilder $securityBuilder
     ) {
         $this->callbacksBuilder = $callbacksBuilder;
         $this->parametersBuilder = $parametersBuilder;
         $this->requestBodyBuilder = $requestBodyBuilder;
         $this->responsesBuilder = $responsesBuilder;
         $this->extensionsBuilder = $extensionsBuilder;
+        $this->securityBuilder = $securityBuilder;
     }
 
     /**
@@ -62,6 +66,7 @@ class OperationsBuilder
             $requestBody = $this->requestBodyBuilder->build($route);
             $responses = $this->responsesBuilder->build($route);
             $callbacks = $this->callbacksBuilder->build($route);
+            $security = $this->securityBuilder->build($route);
 
             $operation = Operation::create()
                 ->action(Str::lower($operationAnnotation->method) ?: $route->method)
@@ -72,6 +77,7 @@ class OperationsBuilder
                 ->parameters(...$parameters)
                 ->requestBody($requestBody)
                 ->responses(...$responses)
+                ->security(...$security)
                 ->callbacks(...$callbacks);
 
             $code_sample_annotation = $actionAnnotations->where('id', 'codeSample')->first();
