@@ -7,9 +7,9 @@ use GoldSpecDigital\ObjectOrientedOAS\Objects\Operation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Vyuldashev\LaravelOpenApi\Annotations\Operation as OperationAnnotation;
-use Vyuldashev\LaravelOpenApi\Builders\Components\CodeSampleBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\ExtensionsBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\CallbacksBuilder;
+use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\CodeSampleBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\ParametersBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\RequestBodyBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\ResponsesBuilder;
@@ -20,6 +20,7 @@ class OperationsBuilder
 {
     protected $callbacksBuilder;
     protected $parametersBuilder;
+    protected $codeSampleBuilder;
     protected $requestBodyBuilder;
     protected $responsesBuilder;
     protected $extensionsBuilder;
@@ -28,6 +29,7 @@ class OperationsBuilder
     public function __construct(
         CallbacksBuilder $callbacksBuilder,
         ParametersBuilder $parametersBuilder,
+        CodeSampleBuilder $codeSampleBuilder,
         RequestBodyBuilder $requestBodyBuilder,
         ResponsesBuilder $responsesBuilder,
         ExtensionsBuilder $extensionsBuilder,
@@ -35,6 +37,7 @@ class OperationsBuilder
     ) {
         $this->callbacksBuilder = $callbacksBuilder;
         $this->parametersBuilder = $parametersBuilder;
+        $this->codeSampleBuilder = $codeSampleBuilder;
         $this->requestBodyBuilder = $requestBodyBuilder;
         $this->responsesBuilder = $responsesBuilder;
         $this->extensionsBuilder = $extensionsBuilder;
@@ -63,6 +66,7 @@ class OperationsBuilder
             $tags = $operationAnnotation->tags ?? [];
 
             $parameters = $this->parametersBuilder->build($route);
+            $codeSample = $this->codeSampleBuilder->build($route);
             $requestBody = $this->requestBodyBuilder->build($route);
             $responses = $this->responsesBuilder->build($route);
             $callbacks = $this->callbacksBuilder->build($route);
@@ -80,21 +84,8 @@ class OperationsBuilder
                 ->security(...$security)
                 ->callbacks(...$callbacks);
 
-            $code_sample_annotation = $actionAnnotations->where('id', 'codeSample')->first();
-            if ($code_sample_annotation) {
-                $code_sample_array = [];
-                foreach ($code_sample_annotation->tags as $code_key) {
-                    $code_sample_build = CodeSampleBuilder::build(
-                        $code_key,
-                        $route
-                    );
-
-                    if (!empty($code_sample_build)) {
-                        $code_sample_array[] = $code_sample_build;
-                    }
-                }
-
-                $operation->x('code-samples', $code_sample_array);
+            if (!empty($codeSample)) {
+                $operation->x('code-samples', $codeSample[0]);
             }
 
             $this->extensionsBuilder->build($operation, $actionAnnotations);
