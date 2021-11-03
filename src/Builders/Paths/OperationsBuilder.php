@@ -8,9 +8,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use phpDocumentor\Reflection\DocBlock;
 use Vyuldashev\LaravelOpenApi\Attributes\Operation as OperationAttribute;
-use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\CodeSampleBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\ExtensionsBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\CallbacksBuilder;
+use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\CodeSampleBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\ParametersBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\RequestBodyBuilder;
 use Vyuldashev\LaravelOpenApi\Builders\Paths\Operation\ResponsesBuilder;
@@ -22,6 +22,7 @@ class OperationsBuilder
 {
     protected CallbacksBuilder $callbacksBuilder;
     protected ParametersBuilder $parametersBuilder;
+    protected CodeSampleBuilder $codeSampleBuilder;
     protected RequestBodyBuilder $requestBodyBuilder;
     protected ResponsesBuilder $responsesBuilder;
     protected ExtensionsBuilder $extensionsBuilder;
@@ -30,6 +31,7 @@ class OperationsBuilder
     public function __construct(
         CallbacksBuilder   $callbacksBuilder,
         ParametersBuilder  $parametersBuilder,
+        CodeSampleBuilder  $codeSampleBuilder,
         RequestBodyBuilder $requestBodyBuilder,
         ResponsesBuilder   $responsesBuilder,
         ExtensionsBuilder  $extensionsBuilder,
@@ -38,6 +40,7 @@ class OperationsBuilder
     {
         $this->callbacksBuilder = $callbacksBuilder;
         $this->parametersBuilder = $parametersBuilder;
+        $this->codeSampleBuilder = $codeSampleBuilder;
         $this->requestBodyBuilder = $requestBodyBuilder;
         $this->responsesBuilder = $responsesBuilder;
         $this->extensionsBuilder = $extensionsBuilder;
@@ -68,6 +71,7 @@ class OperationsBuilder
                 ->toArray();
 
             $parameters = $this->parametersBuilder->build($route);
+            $codeSample = $this->codeSampleBuilder->build($route);
             $requestBody = $this->requestBodyBuilder->build($route);
             $responses = $this->responsesBuilder->build($route);
             $callbacks = $this->callbacksBuilder->build($route);
@@ -91,6 +95,10 @@ class OperationsBuilder
                 $operation = $operation->noSecurity();
             } else {
                 $operation = $operation->security(...$security);
+            }
+
+            if (!empty($codeSample)) {
+                $operation->x('code-samples', $codeSample[0]);
             }
 
             $this->extensionsBuilder->build($operation, $route->actionAttributes);
