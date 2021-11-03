@@ -3,7 +3,6 @@
 namespace Vyuldashev\LaravelOpenApi\Builders\Paths\Operation;
 
 use GoldSpecDigital\ObjectOrientedOAS\Objects\Response;
-use Vyuldashev\LaravelOpenApi\Annotations\Response as ResponseAnnotation;
 use Vyuldashev\LaravelOpenApi\Annotations\Security as SecurityAnnotation;
 use GoldSpecDigital\ObjectOrientedOAS\Objects\SecurityRequirement;
 use Vyuldashev\LaravelOpenApi\Contracts\Reusable;
