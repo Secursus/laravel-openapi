@@ -47,9 +47,10 @@ class Generator
         $servers = $this->serversBuilder->build(Arr::get($this->config, 'collections.'.$collection.'.servers', []));
         $tags = $this->tagsBuilder->build(Arr::get($this->config, 'collections.'.$collection.'.tags', []));
         $paths = $this->pathsBuilder->build($collection, Arr::get($middlewares, 'paths', []));
-        $components = $this->componentsBuilder->build($collection);
+        $components = $this->componentsBuilder->build($collection, Arr::get($middlewares, 'components', []));
+        $extensions = Arr::get($this->config, 'collections.'.$collection.'.extensions', []);
 
-        return OpenApi::create()
+        $openApi = OpenApi::create()
             ->openapi(OpenApi::OPENAPI_3_0_2)
             ->info($info)
             ->servers(...$servers)
@@ -57,5 +58,11 @@ class Generator
             ->components($components)
             ->security(...Arr::get($this->config, 'collections.'.$collection.'.security', []))
             ->tags(...$tags);
+
+        foreach ($extensions as $key => $value) {
+            $openApi = $openApi->x($key, $value);
+        }
+
+        return $openApi;
     }
 }

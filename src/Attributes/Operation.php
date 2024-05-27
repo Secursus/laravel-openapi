@@ -18,18 +18,29 @@ class Operation
 
     public ?string $method;
 
+    public ?array $servers;
+
     /**
-     * @param string|null $id
-     * @param array $tags
-     * @param \Vyuldashev\LaravelOpenApi\Factories\SecuritySchemeFactory|string|null $security
-     * @param string|null $method
+     * @param  string|null  $id
+     * @param  array  $tags
+     * @param  \Vyuldashev\LaravelOpenApi\Factories\SecuritySchemeFactory|string|null  $security
+     * @param  string|null  $method
+     *
      * @throws InvalidArgumentException
      */
-    public function __construct(string $id = null, array $tags = [], string $security = null, string $method = null)
+    public function __construct(string $id = null, array $tags = [], string $security = null, string $method = null, array $servers = null)
     {
         $this->id = $id;
         $this->tags = $tags;
         $this->method = $method;
+        $this->servers = $servers;
+
+        if ($security === '') {
+            //user wants to turn off security on this operation
+            $this->security = $security;
+
+            return;
+        }
 
         if ($security) {
             $this->security = class_exists($security) ? $security : app()->getNamespace().'OpenApi\\SecuritySchemes\\'.$security;
