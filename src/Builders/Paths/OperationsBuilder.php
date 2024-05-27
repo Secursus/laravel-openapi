@@ -22,6 +22,7 @@ class OperationsBuilder
 {
     protected CallbacksBuilder $callbacksBuilder;
     protected ParametersBuilder $parametersBuilder;
+    protected CodeSampleBuilder $codeSampleBuilder;
     protected RequestBodyBuilder $requestBodyBuilder;
     protected ResponsesBuilder $responsesBuilder;
     protected ExtensionsBuilder $extensionsBuilder;
@@ -30,6 +31,7 @@ class OperationsBuilder
     public function __construct(
         CallbacksBuilder   $callbacksBuilder,
         ParametersBuilder  $parametersBuilder,
+        CodeSampleBuilder  $codeSampleBuilder,
         RequestBodyBuilder $requestBodyBuilder,
         ResponsesBuilder   $responsesBuilder,
         ExtensionsBuilder  $extensionsBuilder,
@@ -84,6 +86,7 @@ class OperationsBuilder
                 ->operationId($operationId)
                 ->parameters(...$parameters)
                 ->requestBody($requestBody)
+                ->responses(...$responses)
                 ->callbacks(...$callbacks)
                 ->servers(...$servers);
 
@@ -92,6 +95,10 @@ class OperationsBuilder
                 $operation = $operation->noSecurity();
             } else {
                 $operation = $operation->security(...$security);
+            }
+
+            if (!empty($codeSample)) {
+                $operation->x('code-samples', $codeSample[0]);
             }
 
             $this->extensionsBuilder->build($operation, $route->actionAttributes);

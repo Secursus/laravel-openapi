@@ -3,20 +3,19 @@
 namespace Vyuldashev\LaravelOpenApi\Builders\Paths\Operation;
 
 use GoldSpecDigital\ObjectOrientedOAS\Objects\Response;
-use Vyuldashev\LaravelOpenApi\Annotations\CodeSample as CodeSampleAnnotation;
+use Vyuldashev\LaravelOpenApi\Attributes\CodeSample as CodeSampleAttribute;
 use GoldSpecDigital\ObjectOrientedOAS\Objects\SecurityRequirement;
-use Vyuldashev\LaravelOpenApi\Contracts\Reusable;
 use Vyuldashev\LaravelOpenApi\RouteInformation;
 
 class CodeSampleBuilder
 {
     public function build(RouteInformation $route): ?array
     {
-        return collect($route->actionAnnotations)
-            ->filter(static function ($annotation) {
-                return $annotation instanceof CodeSampleAnnotation;
+        return $route->actionAttributes
+            ->filter(static function ($attribute) {
+                return $attribute instanceof CodeSampleAttribute;
             })
-            ->map(static function (CodeSampleAnnotation $codeSample) use ($route) {
+            ->map(static function (CodeSampleAttribute $codeSample) use ($route) {
                 $array_code = [];
                 foreach ($codeSample->codes as $code) {
                     $array_code[] = self::generate($code, $route, $codeSample->bearer);
