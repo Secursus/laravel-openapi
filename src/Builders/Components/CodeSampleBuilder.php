@@ -3,7 +3,6 @@
 namespace Vyuldashev\LaravelOpenApi\Builders\Components;
 
 
-use Vyuldashev\LaravelOpenApi\Annotations\Operation;
 use Vyuldashev\LaravelOpenApi\RouteInformation;
 
 class CodeSampleBuilder
