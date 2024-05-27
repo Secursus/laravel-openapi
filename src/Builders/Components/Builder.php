@@ -22,7 +22,6 @@ abstract class Builder
         return collect($this->directories)
             ->map(function (string $directory) {
                 $map = ClassMapGenerator::createMap($directory);
-
                 return array_keys($map);
             })
             ->flatten()
