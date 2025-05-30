@@ -14,9 +14,16 @@ class SecurityBuilder
             ->filter(static fn (object $attribute) => $attribute instanceof SecurityAttribute)
             ->map(static function (SecurityAttribute $attribute) {
                 if ($attribute->enabled) {
-                    return SecurityRequirement::create()
-                        ->securityScheme($attribute->scheme)
-                    ;
+                    $requirement = SecurityRequirement::create();
+
+                    if (is_array($attribute->scheme)) {
+                        foreach ($attribute->scheme as $scheme) {
+                            $requirement = $requirement->securityScheme($scheme);
+                        }
+                        return $requirement;
+                    }
+
+                    return $requirement->securityScheme($attribute->scheme);
                 }
 
                 return null;
