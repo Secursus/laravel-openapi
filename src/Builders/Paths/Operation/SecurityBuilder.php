@@ -12,22 +12,20 @@ class SecurityBuilder
     {
         return $route->actionAttributes
             ->filter(static fn (object $attribute) => $attribute instanceof SecurityAttribute)
-            ->map(static function (SecurityAttribute $attribute) {
+            ->flatMap(static function (SecurityAttribute $attribute) {
                 if ($attribute->enabled) {
-                    $requirement = SecurityRequirement::create();
-
                     if (is_array($attribute->scheme)) {
-                        foreach ($attribute->scheme as $scheme) {
-                            $requirement = $requirement->securityScheme($scheme);
-                        }
-                        return $requirement;
+                        return collect($attribute->scheme)->map(function ($scheme) {
+                            return SecurityRequirement::create()->securityScheme($scheme);
+                        });
                     }
 
-                    return $requirement->securityScheme($attribute->scheme);
+                    return [SecurityRequirement::create()->securityScheme($attribute->scheme)];
                 }
 
                 return null;
             })
+            ->filter()
             ->values()
             ->toArray();
     }
