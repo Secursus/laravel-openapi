@@ -34,12 +34,14 @@ class ComponentsBuilder
 
     public function build(
         string $collection = Generator::COLLECTION_DEFAULT,
-        array $middlewares = []
+        array $middlewares = [],
+        array $usedResponseFactories = [],
+        array $usedSchemaFactories = []
     ): ?Components {
         $callbacks = $this->callbacksBuilder->build($collection);
         $requestBodies = $this->requestBodiesBuilder->build($collection);
-        $responses = $this->responsesBuilder->build($collection);
-        $schemas = $this->schemasBuilder->build($collection);
+        $responses = $this->responsesBuilder->build($collection, $usedResponseFactories);
+        $schemas = $this->schemasBuilder->build($collection, $usedSchemaFactories);
         $securitySchemes = $this->securitySchemesBuilder->build($collection);
 
         $components = Components::create();

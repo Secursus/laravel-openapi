@@ -24,14 +24,13 @@ class PathsBuilder
     }
 
     /**
+     * Get routes for a specific collection
+     *
      * @param  string  $collection
-     * @param  PathMiddleware[]  $middlewares
-     * @return array
+     * @return Collection
      */
-    public function build(
-        string $collection,
-        array $middlewares
-    ): array {
+    public function getRoutesForCollection(string $collection): Collection
+    {
         return $this->routes()
             ->filter(static function (RouteInformation $routeInformation) use ($collection) {
                 /** @var CollectionAttribute|null $collectionAttribute */
@@ -45,7 +44,19 @@ class PathsBuilder
                         (is_array($collectionAttribute->name) && in_array($collection, $collectionAttribute->name, true)) ||
                         (is_string($collectionAttribute->name) && $collection === $collectionAttribute->name)
                     ));
-            })
+            });
+    }
+
+    /**
+     * @param  string  $collection
+     * @param  PathMiddleware[]  $middlewares
+     * @return array
+     */
+    public function build(
+        string $collection,
+        array $middlewares
+    ): array {
+        return $this->getRoutesForCollection($collection)
             ->map(static function (RouteInformation $item) use ($middlewares) {
                 foreach ($middlewares as $middleware) {
                     app($middleware)->before($item);
