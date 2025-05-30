@@ -98,7 +98,7 @@ class OperationsBuilder
             }
 
             if (!empty($codeSample)) {
-                $operation->x('code-samples', $codeSample[0]);
+                $operation->x('codeSamples', $codeSample[0]);
             }
 
             $this->extensionsBuilder->build($operation, $route->actionAttributes);
