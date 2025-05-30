@@ -42,7 +42,7 @@ class CodeSampleBuilder
         }
 
         if ($type === "php") {
-            $data['lang'] = "go";
+            $data['lang'] = "php";
             $data['label'] = "PHP";
             $data['source'] = self::buildSource($type, $route, $bearer);
         }
