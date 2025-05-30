@@ -210,6 +210,78 @@ class SecurityBuilderTest extends TestCase
             ],
         ], $openApi->toArray());
     }
+    /**
+     * Test that multiple security schemes are correctly handled with OR logic.
+     */
+    public function testWeCanAddMultipleSecuritySchemesWithOrLogic()
+    {
+        $jwtSecurityFactory = resolve(JwtSecurityScheme::class);
+        $testJwtScheme = $jwtSecurityFactory->build();
+
+        $basicAuthSecurityFactory = resolve(BasicAuthSecurityScheme::class);
+        $testBasicAuthScheme = $basicAuthSecurityFactory->build();
+
+        $components = Components::create()
+            ->securitySchemes($testJwtScheme, $testBasicAuthScheme);
+
+        $routeInfo = new RouteInformation;
+        $routeInfo->action = 'get';
+        $routeInfo->method = 'get';
+        $routeInfo->name = 'test route';
+        $routeInfo->actionAttributes = collect([
+            new AttributesOperation(security: ['JWT', 'BasicAuth']),
+        ]);
+        $routeInfo->uri = '/example';
+
+        /** @var SecurityBuilder */
+        $builder = resolve(SecurityBuilder::class);
+
+        $operation = Operation::create()
+            ->security(...$builder->build($routeInfo))
+            ->action('get');
+
+        $openApi = OpenApi::create()
+            ->components($components)
+            ->paths(
+                PathItem::create()
+                    ->route('/foo')
+                    ->operations($operation)
+            );
+
+        self::assertSame([
+            'paths' => [
+                '/foo' => [
+                    'get' => [
+                        'security' => [
+                            [
+                                'JWT' => [],
+                            ],
+                            [
+                                'BasicAuth' => [],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'components' => [
+                'securitySchemes' => [
+                    'JWT' => [
+                        'type' => 'http',
+                        'name' => 'TestScheme',
+                        'in' => 'header',
+                        'scheme' => 'bearer',
+                        'bearerFormat' => 'JWT',
+                    ],
+                    'BasicAuth' => [
+                        'type' => 'http',
+                        'name' => 'BasicAuthScheme',
+                        'in' => 'header',
+                        'scheme' => 'basic',
+                    ],
+                ],
+            ],
+        ], $openApi->toArray());
+    }
 }
 
 class JwtSecurityScheme extends SecuritySchemeFactory
@@ -222,5 +294,17 @@ class JwtSecurityScheme extends SecuritySchemeFactory
             ->in(SecurityScheme::IN_HEADER)
             ->scheme('bearer')
             ->bearerFormat('JWT');
+    }
+}
+
+class BasicAuthSecurityScheme extends SecuritySchemeFactory
+{
+    public function build(): SecurityScheme
+    {
+        return SecurityScheme::create('BasicAuth')
+            ->name('BasicAuthScheme')
+            ->type(SecurityScheme::TYPE_HTTP)
+            ->in(SecurityScheme::IN_HEADER)
+            ->scheme('basic');
     }
 }
