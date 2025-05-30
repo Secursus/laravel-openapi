@@ -128,6 +128,7 @@ class CodeSampleBuilder
                 }
                 if (in_array('BasicAuth', $securitySchemes)) {
                     $auth_code .= '
+# Or with BasicAuth
 -H "Authorization: Basic XXXXXXXXXXXXXXX" \ ';
                 }
             }
