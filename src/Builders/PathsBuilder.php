@@ -39,10 +39,12 @@ class PathsBuilder
                     ->merge($routeInformation->controllerAttributes)
                     ->merge($routeInformation->actionAttributes)
                     ->first(static fn (object $item) => $item instanceof CollectionAttribute);
-
                 return
                     (! $collectionAttribute && $collection === Generator::COLLECTION_DEFAULT) ||
-                    ($collectionAttribute && in_array($collection, $collectionAttribute->name, true));
+                    ($collectionAttribute && (
+                        (is_array($collectionAttribute->name) && in_array($collection, $collectionAttribute->name, true)) ||
+                        (is_string($collectionAttribute->name) && $collection === $collectionAttribute->name)
+                    ));
             })
             ->map(static function (RouteInformation $item) use ($middlewares) {
                 foreach ($middlewares as $middleware) {
