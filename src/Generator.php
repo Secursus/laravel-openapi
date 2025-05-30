@@ -91,8 +91,7 @@ class Generator
 
     /**
      * Get all schema factories used by routes in a collection
-     * This is a simplified implementation that only checks for schemas used in responses
-     * A more complete implementation would also check for schemas used in request bodies
+     * This implementation checks for schemas used in responses and request bodies
      *
      * @param string $collection
      * @return array
@@ -102,6 +101,9 @@ class Generator
         $routes = $this->pathsBuilder->getRoutesForCollection($collection);
         $usedSchemaFactories = [];
 
+        // Get all schema factories from the project
+        $allSchemaFactories = $this->getAllSchemaFactories();
+
         foreach ($routes as $route) {
             // Check for schemas in responses
             $responseAttributes = $route->actionAttributes
@@ -109,9 +111,21 @@ class Generator
 
             foreach ($responseAttributes as $attribute) {
                 $responseFactory = app($attribute->factory);
-                $reflection = new \ReflectionClass($responseFactory);
+                $responseFactoryCode = $this->getClassCode(get_class($responseFactory));
 
-                // Look for properties that might contain schema factories
+                // Find all schema factory references in the response factory code
+                foreach ($allSchemaFactories as $schemaFactory) {
+                    $schemaClass = class_basename($schemaFactory);
+                    // Look for direct class references or ::ref() method calls
+                    if (strpos($responseFactoryCode, $schemaClass . '::') !== false || 
+                        strpos($responseFactoryCode, $schemaClass . '::ref') !== false ||
+                        strpos($responseFactoryCode, 'use ' . $schemaFactory) !== false) {
+                        $usedSchemaFactories[] = $schemaFactory;
+                    }
+                }
+
+                // Also check properties that might contain schema factories
+                $reflection = new \ReflectionClass($responseFactory);
                 foreach ($reflection->getProperties() as $property) {
                     $property->setAccessible(true);
                     $value = $property->getValue($responseFactory);
@@ -128,6 +142,24 @@ class Generator
                 ->filter(static fn(object $attribute) => $attribute instanceof \Vyuldashev\LaravelOpenApi\Attributes\RequestBody);
 
             foreach ($requestBodyAttributes as $attribute) {
+                // Check if the request body has a factory
+                if (isset($attribute->factory)) {
+                    $requestBodyFactory = app($attribute->factory);
+                    $requestBodyFactoryCode = $this->getClassCode(get_class($requestBodyFactory));
+
+                    // Find all schema factory references in the request body factory code
+                    foreach ($allSchemaFactories as $schemaFactory) {
+                        $schemaClass = class_basename($schemaFactory);
+                        // Look for direct class references or ::ref() method calls
+                        if (strpos($requestBodyFactoryCode, $schemaClass . '::') !== false || 
+                            strpos($requestBodyFactoryCode, $schemaClass . '::ref') !== false ||
+                            strpos($requestBodyFactoryCode, 'use ' . $schemaFactory) !== false) {
+                            $usedSchemaFactories[] = $schemaFactory;
+                        }
+                    }
+                }
+
+                // Also check content factories
                 if (isset($attribute->content) && is_array($attribute->content)) {
                     foreach ($attribute->content as $content) {
                         if (isset($content['factory']) && 
@@ -140,6 +172,83 @@ class Generator
         }
 
         return array_unique($usedSchemaFactories);
+    }
+
+    /**
+     * Get all schema factories from the project
+     *
+     * @return array
+     */
+    protected function getAllSchemaFactories(): array
+    {
+        $schemaFactories = [];
+
+        // Use the same directories as the SchemasBuilder
+        $directories = config('openapi.locations.schemas');
+
+        foreach ($directories as $directory) {
+            $files = glob($directory . '/*.php');
+            foreach ($files as $file) {
+                $className = $this->getClassNameFromFile($file);
+                if ($className && class_exists($className) && 
+                    is_subclass_of($className, \Vyuldashev\LaravelOpenApi\Factories\SchemaFactory::class)) {
+                    $schemaFactories[] = $className;
+                }
+            }
+        }
+
+        return $schemaFactories;
+    }
+
+    /**
+     * Get the class name from a file
+     *
+     * @param string $file
+     * @return string|null
+     */
+    protected function getClassNameFromFile(string $file): ?string
+    {
+        $content = file_get_contents($file);
+        $namespace = null;
+        $class = null;
+
+        // Extract namespace
+        if (preg_match('/namespace\s+([^;]+);/', $content, $matches)) {
+            $namespace = $matches[1];
+        }
+
+        // Extract class name
+        if (preg_match('/class\s+(\w+)/', $content, $matches)) {
+            $class = $matches[1];
+        }
+
+        if ($namespace && $class) {
+            return $namespace . '\\' . $class;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the code of a class
+     *
+     * @param string $class
+     * @return string
+     */
+    protected function getClassCode(string $class): string
+    {
+        try {
+            $reflection = new \ReflectionClass($class);
+            $file = $reflection->getFileName();
+
+            if ($file) {
+                return file_get_contents($file);
+            }
+        } catch (\ReflectionException $e) {
+            // Ignore
+        }
+
+        return '';
     }
 
     public function generate(string $collection = self::COLLECTION_DEFAULT): OpenApi
