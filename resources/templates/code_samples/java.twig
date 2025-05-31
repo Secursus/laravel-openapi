@@ -1,23 +1,34 @@
-// {{ operation.summary }}
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+URL url = new URL("{{ base_url }}{{ uri }}");
 
-public class ApiClient {
-    public static void main(String[] args) throws Exception {
-        HttpClient client = HttpClient.newHttpClient();
-        
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-            .uri(URI.create("{{ operation.url }}"))
-            .method("{{ operation.method|upper }}", HttpRequest.BodyPublishers.noBody());
-            
-        {% for header in operation.headers %}
-        requestBuilder.header("{{ header.name }}", "{{ header.example }}");
-        {% endfor %}
-        
-        HttpRequest request = requestBuilder.build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println(response.body());
-    }
+HttpURLConnection con = (HttpURLConnection) url.openConnection();
+con.setRequestMethod("{{ method|upper }}");
+con.setRequestProperty("Content-Type", "application/json;");
+{% if security_enabled -%}
+    {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
+con.setRequestProperty("Authorization", "Basic API_KEY:API_SECRET_KEY"); # Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+    {%~ elseif 'BearerToken' in security_schemes %}
+con.setRequestProperty("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJ...");
+    {%~ elseif 'BasicAuth' in security_schemes %}
+con.setRequestProperty("Authorization", "Basic API_KEY:API_SECRET_KEY");
+    {%~ endif -%}
+{% endif %}
+con.setDoOutput(true);
+
+{%~ if method in ['post', 'put', 'patch'] %}
+String jsonInputString = '{{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}';
+try (OutputStream os = con.getOutputStream()) {
+    byte[] input = jsonInputString.getBytes("utf-8");
+    os.write(input, 0, input.length);
 }
+{% endif -%}
+
+BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), "utf-8"));
+StringBuilder response = new StringBuilder();
+String responseLine;
+while ((responseLine = in.readLine()) != null) {
+    response.append(responseLine.trim());
+}
+in.close();
+con.disconnect();
+
+System.out.println(response.toString());
