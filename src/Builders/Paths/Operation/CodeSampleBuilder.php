@@ -13,7 +13,8 @@ class CodeSampleBuilder
 
     public function __construct()
     {
-        $loader = new FilesystemLoader(resource_path('templates/code_samples'));
+        $templatePath = __DIR__ . '/../../../../resources/templates/code_samples';
+        $loader = new FilesystemLoader($templatePath);
         $this->twig = new Environment($loader);
     }
 
