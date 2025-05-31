@@ -83,7 +83,7 @@ class CodeSampleBuilder
             'csharp' => ['lang' => 'csharp', 'label' => 'C#'],
             'objective' => ['lang' => 'csharp', 'label' => 'Objective-C'],
             'swift' => ['lang' => 'csharp', 'label' => 'Swift'],
-            'ruby' => ['lang' => 'ruby', 'label' => 'Ruby'],
+            'ruby' => ['lang' => 'go', 'label' => 'Ruby'],
             'go' => ['lang' => 'go', 'label' => 'Go'],
         ];
 
