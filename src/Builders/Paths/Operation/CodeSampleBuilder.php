@@ -80,9 +80,11 @@ class CodeSampleBuilder
             'javascript' => ['lang' => 'js', 'label' => 'Javascript'],
             'python' => ['lang' => 'py', 'label' => 'Python'],
             'java' => ['lang' => 'java', 'label' => 'Java'],
-            'csharp' => ['lang' => 'csharp', 'label' => 'C# - Reshapr'],
-            'objective' => ['lang' => 'csharp', 'label' => 'Objective-C - NSURL'],
-            'swift' => ['lang' => 'csharp', 'label' => 'Swift - NSURL'],
+            'csharp' => ['lang' => 'csharp', 'label' => 'C#'],
+            'objective' => ['lang' => 'csharp', 'label' => 'Objective-C'],
+            'swift' => ['lang' => 'csharp', 'label' => 'Swift'],
+            'ruby' => ['lang' => 'ruby', 'label' => 'Ruby'],
+            'go' => ['lang' => 'go', 'label' => 'Go'],
         ];
 
         $template = $this->twig->render("{$lang}.twig", $context);
