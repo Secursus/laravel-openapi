@@ -1,56 +1,33 @@
-{% set method_constant = {
-    'get': 'HTTP_METH_GET',
-    'post': 'HTTP_METH_POST',
-    'put': 'HTTP_METH_PUT',
-    'delete': 'HTTP_METH_DELETE'
-}[method] %}
+<?
+{%~ if method in ['post', 'put', 'patch'] %}
+$data = json_decode('{{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}');
 
-{% set headers = {
-    'cache-control': 'no-cache',
-    'content-type': 'application/json'
-} %}
+{% endif -%}
 
-{% if security_enabled %}
-    {% if 'BearerToken' in security_schemes %}
-        {% set bearer_headers = headers|merge({'Authorization': 'Bearer XXXXXXXXXXXXXXX'}) %}
-    {% endif %}
-    {% if 'BasicAuth' in security_schemes %}
-        {% set basic_headers = headers|merge({'Authorization': 'Basic XXXXXXXXXXXXXXX'}) %}
-    {% endif %}
+$ch = curl_init("{{ base_url }}{{ uri }}");
+
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+{% if method == 'post' %}
+curl_setopt($ch, CURLOPT_POST, true);
+{% elseif method in ['put', 'patch', 'delete'] %}
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "{{ method|upper }}");
 {% endif %}
-
-$request->setUrl('{{ base_url }}{{ uri }}');
-$request->setMethod({{ method_constant }});
-
-{% if bearer_headers is defined %}
-$request->setHeaders([
-    {% for key, value in bearer_headers %}
-    '{{ key }}' => '{{ value }}'{{ not loop.last ? ',' : '' }}
-    {% endfor %}
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json',
+{% if security_enabled -%}
+    {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
+    'Authorization: Basic API_KEY:API_SECRET_KEY' // Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+    {%~ elseif 'BearerToken' in security_schemes %}
+    'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJ...'
+    {%~ elseif 'BasicAuth' in security_schemes %}
+    'Authorization: Basic API_KEY:API_SECRET_KEY'
+    {%~ endif -%}
+{% endif %}
 ]);
-{% if basic_headers is defined %}
-// Or with BasicAuth
-$request->setHeaders([
-    {% for key, value in basic_headers %}
-    '{{ key }}' => '{{ value }}'{{ not loop.last ? ',' : '' }}
-    {% endfor %}
-]);
-{% endif %}
-{% else %}
-$request->setHeaders([
-    {% for key, value in headers %}
-    '{{ key }}' => '{{ value }}'{{ not loop.last ? ',' : '' }}
-    {% endfor %}
-]);
+{% if method in ['post', 'put', 'patch'] %}
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 {% endif %}
 
-{% if method in ['post', 'put'] %}
-$request->setBody('{{ sample_data|json_encode|raw }}');
-{% endif %}
-
-try {
-    $response = $request->send();
-    echo $response->getBody();
-} catch (HttpException $ex) {
-    echo $ex;
-}
+$response = curl_exec($ch);
+curl_close($ch);
+?>
