@@ -1,0 +1,34 @@
+client := &http.Client{}
+{%~ if method in ['post', 'put', 'patch'] %}
+jsonData := []byte(`{{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}`)
+{% endif ~%}
+
+req, _ := http.NewRequest(
+    "{{ method|upper }}",
+    "{{ base_url }}{{ uri }}",
+{% if method in ['post', 'put', 'patch'] %}
+    bytes.NewBuffer(jsonData)
+{% else %}
+    nil
+{% endif %}
+)
+
+req.Header.Add("Content-Type", "application/json")
+{% if security_enabled -%}
+    {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
+req.Header.Add("Authorization", "Basic API_KEY:API_SECRET_KEY") # Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+    {%~ elseif 'BearerToken' in security_schemes %}
+req.Header.Add("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJ...")
+    {%~ elseif 'BasicAuth' in security_schemes %}
+req.Header.Add("Authorization", "Bearer API_KEY:API_SECRET_KEY")
+    {%~ endif -%}
+{% endif %}
+
+resp, err := client.Do(req)
+if err != nil {
+    panic(err)
+}
+defer resp.Body.Close()
+
+body, _ := ioutil.ReadAll(resp.Body)
+fmt.Println(string(body))
