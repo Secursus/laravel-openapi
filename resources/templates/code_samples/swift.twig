@@ -1,18 +1,31 @@
-// {{ operation.summary }}
 import Foundation
 
-let url = URL(string: "{{ operation.url }}")!
-var request = URLRequest(url: url)
-request.httpMethod = "{{ operation.method|upper }}"
+let url = URL(string: "{{ base_url }}{{ uri }}")!
 
-{% for header in operation.headers %}
-request.setValue("{{ header.example }}", forHTTPHeaderField: "{{ header.name }}")
-{% endfor %}
+var request = URLRequest(url: url)
+request.httpMethod = "{{ method|upper }}"
+request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+{% if security_enabled -%}
+    {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
+request.setValue("Basic API_KEY:API_SECRET_KEY", forHTTPHeaderField: "Authorization") # Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+    {%~ elseif 'BearerToken' in security_schemes %}
+request.setValue("Bearer eyJ0eXAiOiJKV1QiLCJ...", forHTTPHeaderField: "Authorization")
+    {%~ elseif 'BasicAuth' in security_schemes %}
+request.setValue("Basic API_KEY:API_SECRET_KEY", forHTTPHeaderField: "Authorization")
+    {%~ endif -%}
+{% endif %}
+
+{%~ if method in ['post', 'put', 'patch'] %}
+let data = {{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}
+
+{% endif -%}
+{% if method in ['post', 'put', 'patch'] %}
+request.httpBody = try? JSONSerialization.data(withJSONObject: data)
+{% endif %}
 
 let task = URLSession.shared.dataTask(with: request) { data, response, error in
     if let data = data {
-        let str = String(data: data, encoding: .utf8)
-        print(str ?? "")
+        print(String(data: data, encoding: .utf8)!)
     }
 }
 task.resume()
