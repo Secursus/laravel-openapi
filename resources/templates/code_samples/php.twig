@@ -1,0 +1,56 @@
+{% set method_constant = {
+    'get': 'HTTP_METH_GET',
+    'post': 'HTTP_METH_POST',
+    'put': 'HTTP_METH_PUT',
+    'delete': 'HTTP_METH_DELETE'
+}[method] %}
+
+{% set headers = {
+    'cache-control': 'no-cache',
+    'content-type': 'application/json'
+} %}
+
+{% if security_enabled %}
+    {% if 'BearerToken' in security_schemes %}
+        {% set bearer_headers = headers|merge({'Authorization': 'Bearer XXXXXXXXXXXXXXX'}) %}
+    {% endif %}
+    {% if 'BasicAuth' in security_schemes %}
+        {% set basic_headers = headers|merge({'Authorization': 'Basic XXXXXXXXXXXXXXX'}) %}
+    {% endif %}
+{% endif %}
+
+$request->setUrl('{{ base_url }}{{ uri }}');
+$request->setMethod({{ method_constant }});
+
+{% if bearer_headers is defined %}
+$request->setHeaders([
+    {% for key, value in bearer_headers %}
+    '{{ key }}' => '{{ value }}'{{ not loop.last ? ',' : '' }}
+    {% endfor %}
+]);
+{% if basic_headers is defined %}
+// Or with BasicAuth
+$request->setHeaders([
+    {% for key, value in basic_headers %}
+    '{{ key }}' => '{{ value }}'{{ not loop.last ? ',' : '' }}
+    {% endfor %}
+]);
+{% endif %}
+{% else %}
+$request->setHeaders([
+    {% for key, value in headers %}
+    '{{ key }}' => '{{ value }}'{{ not loop.last ? ',' : '' }}
+    {% endfor %}
+]);
+{% endif %}
+
+{% if method in ['post', 'put'] %}
+$request->setBody('{{ sample_data|json_encode|raw }}');
+{% endif %}
+
+try {
+    $response = $request->send();
+    echo $response->getBody();
+} catch (HttpException $ex) {
+    echo $ex;
+}

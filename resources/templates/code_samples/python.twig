@@ -1,0 +1,32 @@
+# {{ operation.summary }}
+import requests
+import json
+
+url = "{{ operation.url }}"
+headers = {
+    {% for header in operation.headers %}
+    "{{ header.name }}": "{{ header.example }}",
+    {% endfor %}
+    "Content-Type": "application/json"
+}
+
+{% if operation.requestBody %}
+data = {{ operation.requestBody.example|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}
+{% else %}
+data = None
+{% endif %}
+
+try:
+    response = requests.{{ operation.method|lower }}(
+        url, 
+        headers=headers, 
+        {% if operation.method in ['GET', 'DELETE'] %}
+        params=data
+        {% else %}
+        data=json.dumps(data)
+        {% endif %}
+    )
+    response.raise_for_status()
+    print(json.dumps(response.json(), indent=2))
+except requests.exceptions.RequestException as e:
+    print(f"Erreur: {e}")

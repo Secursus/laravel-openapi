@@ -1,0 +1,17 @@
+{% set base_url = base_url|trim('/', 'right') %}
+curl -k -i -H "Content-Type: application/json" \
+{% if security_enabled %}
+    {% if 'BearerToken' in security_schemes %}
+-H "Authorization: Bearer XXXXXXXXXXXXXXX" \
+    {% endif %}
+    {% if 'BasicAuth' in security_schemes %}
+# Or with BasicAuth
+-H "Authorization: Basic XXXXXXXXXXXXXXX" \
+    {% endif %}
+{% endif %}
+{% if method in ['post', 'put'] %}
+-X {{ method|upper }} -d '{{ sample_data|json_encode }}' \
+{% else %}
+-X {{ method|upper }} \
+{% endif %}
+"{{ base_url }}{{ uri }}"

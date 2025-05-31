@@ -1,0 +1,18 @@
+// {{ operation.summary }}
+import Foundation
+
+let url = URL(string: "{{ operation.url }}")!
+var request = URLRequest(url: url)
+request.httpMethod = "{{ operation.method|upper }}"
+
+{% for header in operation.headers %}
+request.setValue("{{ header.example }}", forHTTPHeaderField: "{{ header.name }}")
+{% endfor %}
+
+let task = URLSession.shared.dataTask(with: request) { data, response, error in
+    if let data = data {
+        let str = String(data: data, encoding: .utf8)
+        print(str ?? "")
+    }
+}
+task.resume()
