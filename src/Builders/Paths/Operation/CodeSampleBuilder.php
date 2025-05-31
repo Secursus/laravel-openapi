@@ -13,26 +13,29 @@ class CodeSampleBuilder
 
     public function __construct()
     {
-        $templatePath = __DIR__ . '/../../../../resources/templates/code_samples';
-        $loader = new FilesystemLoader($templatePath);
+        $template_path = __DIR__ . '/../../../../resources/templates/code_samples';
+        $loader = new FilesystemLoader($template_path);
         $this->twig = new Environment($loader);
     }
 
     public function build(RouteInformation $route): ?array
     {
-        $securitySchemes = [];
-        $securityEnabled = false;
+        $security_schemes = [];
+        $security_enabled = false;
 
-        $securityAttributes = $route->actionAttributes
+        $security_attributes = $route->actionAttributes
             ->filter(static function ($attribute) {
                 return $attribute instanceof \Vyuldashev\LaravelOpenApi\Attributes\Security;
             });
 
-        if ($securityAttributes->count() > 0) {
-            $securityAttribute = $securityAttributes->first();
-            $securityEnabled = $securityAttribute->enabled;
-            if ($securityEnabled) {
-                $securitySchemes = is_array($securityAttribute->scheme) ? $securityAttribute->scheme : [$securityAttribute->scheme];
+        if ($security_attributes->count() > 0) {
+            $security_attribute = $security_attributes->first();
+            $security_enabled = $security_attribute->enabled;
+            if ($security_enabled) {
+                $security_schemes = is_array($security_attribute->scheme) ?
+                    $security_attribute->scheme :
+                    [$security_attribute->scheme]
+                ;
             }
         }
 
@@ -40,10 +43,10 @@ class CodeSampleBuilder
             ->filter(static function ($attribute) {
                 return $attribute instanceof CodeSampleAttribute;
             })
-            ->map(function (CodeSampleAttribute $codeSample) use ($route, $securityEnabled, $securitySchemes) {
+            ->map(function (CodeSampleAttribute $codeSample) use ($route, $security_enabled, $security_schemes) {
                 $array_code = [];
                 foreach ($codeSample->codes as $code) {
-                    $array_code[] = $this->generateTemplate($code, $route, $securityEnabled, $securitySchemes);
+                    $array_code[] = $this->generateTemplate($code, $route, $security_enabled, $security_schemes);
                 }
 
                 if ($array_code) {
@@ -53,10 +56,11 @@ class CodeSampleBuilder
                 return null;
             })
             ->values()
-            ->toArray();
+            ->toArray()
+        ;
     }
 
-    protected function generateTemplate(string $lang, RouteInformation $route, bool $securityEnabled, array $securitySchemes): array
+    protected function generateTemplate(string $lang, RouteInformation $route, bool $security_enabled, array $security_schemes): array
     {
         $base_url = config('openapi.collections.default.servers')[0]['url'] ?? '';
         $base_url = rtrim($base_url, '/');
@@ -65,17 +69,15 @@ class CodeSampleBuilder
             'method' => $route->method,
             'uri' => $route->uri,
             'base_url' => $base_url,
-            'security_enabled' => $securityEnabled,
-            'security_schemes' => $securitySchemes,
+            'security_enabled' => $security_enabled,
+            'security_schemes' => $security_schemes,
             'sample_data' => ['field_1' => 'xyz', 'field_2' => 'abc']
         ];
 
         $languageMap = [
             'curl' => ['lang' => 'shell', 'label' => 'CURL'],
             'php' => ['lang' => 'go', 'label' => 'PHP'],
-            'node-js' => ['lang' => 'js', 'label' => 'JS - Node'],
-            'node-xhr' => ['lang' => 'js', 'label' => 'JS - XHR'],
-            'node-jquery' => ['lang' => 'js', 'label' => 'JS - JQuery'],
+            'javascript' => ['lang' => 'js', 'label' => 'Javascript'],
             'python' => ['lang' => 'py', 'label' => 'Python'],
             'java' => ['lang' => 'java', 'label' => 'Java'],
             'csharp' => ['lang' => 'csharp', 'label' => 'C# - Reshapr'],
