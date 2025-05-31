@@ -1,104 +1,25 @@
-{% set variants = {
-    'node-js': 'Request',
-    'node-xhr': 'XHR',
-    'node-jquery': 'jQuery'
-} %}
+{%~ if method in ['post', 'put', 'patch'] %}
+data = {{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}
 
-{% set variant = variant|default('node-js') %}
-{% set variant_label = variants[variant] %}
+{% endif -%}
 
-// Using {{ variant_label }}
-var request = require("request");
-
-{% set headers = {
-    'cache-control': 'no-cache',
-    'content-type': 'application/json'
-} %}
-
-{% if security_enabled %}
-    {% if 'BearerToken' in security_schemes %}
-        {% set bearer_headers = headers|merge({'Authorization': 'Bearer XXXXXXXXXXXXXXX'}) %}
-    {% endif %}
-    {% if 'BasicAuth' in security_schemes %}
-        {% set basic_headers = headers|merge({'Authorization': 'Basic XXXXXXXXXXXXXXX'}) %}
-    {% endif %}
+fetch('{{ base_url }}{{ uri }}', {
+    method: '{{ method|upper }}',
+    headers: {
+        'Content-Type': 'application/json',
+{% if security_enabled -%}
+    {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
+        'Authorization': 'Basic API_KEY:API_SECRET_KEY', // Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+    {%~ elseif 'BearerToken' in security_schemes %}
+        'Authorization: 'Bearer eyJ0eXAiOiJKV1QiLCJ...'
+    {%~ elseif 'BasicAuth' in security_schemes %}
+        'Authorization': 'Basic API_KEY:API_SECRET_KEY'
+    {%~ endif -%}
 {% endif %}
-
-{% if bearer_headers is defined and basic_headers is defined %}
-var options = {
-    method: '{{ method|upper }}',
-    url: '{{ base_url }}{{ uri }}',
-    headers: {{ bearer_headers|json_encode|raw }},
-    {% if method in ['post', 'put'] %}
-    body: {{ sample_data|json_encode|raw }},
-    json: true
-    {% else %}
-    json: true
-    {% endif %}
-};
-
-// Or with BasicAuth
-var basicOptions = {
-    method: '{{ method|upper }}',
-    url: '{{ base_url }}{{ uri }}',
-    headers: {{ basic_headers|json_encode|raw }},
-    {% if method in ['post', 'put'] %}
-    body: {{ sample_data|json_encode|raw }},
-    json: true
-    {% else %}
-    json: true
-    {% endif %}
-};
-{% elseif bearer_headers is defined %}
-var options = {
-    method: '{{ method|upper }}',
-    url: '{{ base_url }}{{ uri }}',
-    headers: {{ bearer_headers|json_encode|raw }},
-    {% if method in ['post', 'put'] %}
-    body: {{ sample_data|json_encode|raw }},
-    json: true
-    {% else %}
-    json: true
-    {% endif %}
-};
-{% elseif basic_headers is defined %}
-var options = {
-    method: '{{ method|upper }}',
-    url: '{{ base_url }}{{ uri }}',
-    headers: {{ basic_headers|json_encode|raw }},
-    {% if method in ['post', 'put'] %}
-    body: {{ sample_data|json_encode|raw }},
-    json: true
-    {% else %}
-    json: true
-    {% endif %}
-};
-{% else %}
-var options = {
-    method: '{{ method|upper }}',
-    url: '{{ base_url }}{{ uri }}',
-    headers: {{ headers|json_encode|raw }},
-    {% if method in ['post', 'put'] %}
-    body: {{ sample_data|json_encode|raw }},
-    json: true
-    {% else %}
-    json: true
-    {% endif %}
-};
+    },
+{% if method in ['post', 'put', 'patch'] %}
+    body: data
 {% endif %}
-
-{% if variant == 'node-js' %}
-request(options, function (error, response, body) {
-    if (error) throw new Error(error);
-    console.log(body);
-});
-
-{% if bearer_headers is defined and basic_headers is defined %}
-request(basicOptions, function (error, response, body) {
-    if (error) throw new Error(error);
-    console.log(body);
-});
-{% endif %}
-{% endif %}
-
-{# Les autres variantes (XHR, jQuery) pourraient être ajoutées ici ultérieurement #}
+})
+.then(response => response.json())
+.then(data => console.log(data))
