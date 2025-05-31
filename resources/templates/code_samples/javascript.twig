@@ -1,0 +1,104 @@
+{% set variants = {
+    'node-js': 'Request',
+    'node-xhr': 'XHR',
+    'node-jquery': 'jQuery'
+} %}
+
+{% set variant = variant|default('node-js') %}
+{% set variant_label = variants[variant] %}
+
+// Using {{ variant_label }}
+var request = require("request");
+
+{% set headers = {
+    'cache-control': 'no-cache',
+    'content-type': 'application/json'
+} %}
+
+{% if security_enabled %}
+    {% if 'BearerToken' in security_schemes %}
+        {% set bearer_headers = headers|merge({'Authorization': 'Bearer XXXXXXXXXXXXXXX'}) %}
+    {% endif %}
+    {% if 'BasicAuth' in security_schemes %}
+        {% set basic_headers = headers|merge({'Authorization': 'Basic XXXXXXXXXXXXXXX'}) %}
+    {% endif %}
+{% endif %}
+
+{% if bearer_headers is defined and basic_headers is defined %}
+var options = {
+    method: '{{ method|upper }}',
+    url: '{{ base_url }}{{ uri }}',
+    headers: {{ bearer_headers|json_encode|raw }},
+    {% if method in ['post', 'put'] %}
+    body: {{ sample_data|json_encode|raw }},
+    json: true
+    {% else %}
+    json: true
+    {% endif %}
+};
+
+// Or with BasicAuth
+var basicOptions = {
+    method: '{{ method|upper }}',
+    url: '{{ base_url }}{{ uri }}',
+    headers: {{ basic_headers|json_encode|raw }},
+    {% if method in ['post', 'put'] %}
+    body: {{ sample_data|json_encode|raw }},
+    json: true
+    {% else %}
+    json: true
+    {% endif %}
+};
+{% elseif bearer_headers is defined %}
+var options = {
+    method: '{{ method|upper }}',
+    url: '{{ base_url }}{{ uri }}',
+    headers: {{ bearer_headers|json_encode|raw }},
+    {% if method in ['post', 'put'] %}
+    body: {{ sample_data|json_encode|raw }},
+    json: true
+    {% else %}
+    json: true
+    {% endif %}
+};
+{% elseif basic_headers is defined %}
+var options = {
+    method: '{{ method|upper }}',
+    url: '{{ base_url }}{{ uri }}',
+    headers: {{ basic_headers|json_encode|raw }},
+    {% if method in ['post', 'put'] %}
+    body: {{ sample_data|json_encode|raw }},
+    json: true
+    {% else %}
+    json: true
+    {% endif %}
+};
+{% else %}
+var options = {
+    method: '{{ method|upper }}',
+    url: '{{ base_url }}{{ uri }}',
+    headers: {{ headers|json_encode|raw }},
+    {% if method in ['post', 'put'] %}
+    body: {{ sample_data|json_encode|raw }},
+    json: true
+    {% else %}
+    json: true
+    {% endif %}
+};
+{% endif %}
+
+{% if variant == 'node-js' %}
+request(options, function (error, response, body) {
+    if (error) throw new Error(error);
+    console.log(body);
+});
+
+{% if bearer_headers is defined and basic_headers is defined %}
+request(basicOptions, function (error, response, body) {
+    if (error) throw new Error(error);
+    console.log(body);
+});
+{% endif %}
+{% endif %}
+
+{# Les autres variantes (XHR, jQuery) pourraient être ajoutées ici ultérieurement #}
