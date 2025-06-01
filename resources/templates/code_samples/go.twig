@@ -5,7 +5,7 @@ jsonData := []byte(`{{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|ra
 req, _ := http.NewRequest(
     "{{ method|upper }}",
     "{{ base_url }}{{ uri }}",
-{% if method in ['post', 'put', 'patch'] %}
+{% if method in ['post', 'put', 'patch'] and sample_data is not empty %}
     bytes.NewBuffer(jsonData)
 {% else %}
     nil

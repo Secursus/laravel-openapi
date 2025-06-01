@@ -64,7 +64,7 @@ class SchemaResolver
         $result = [];
         $itemsSchema = $schema['items'] ?? [];
         $minItems = $schema['minItems'] ?? 1;
-        $maxItems = $schema['maxItems'] ?? 5;
+        $maxItems = $schema['maxItems'] ?? 1;
 
         $count = $this->faker->numberBetween($minItems, $maxItems);
 

@@ -15,11 +15,11 @@ request.setValue("Basic API_KEY:API_SECRET_KEY", forHTTPHeaderField: "Authorizat
     {%~ endif -%}
 {% endif %}
 
-{%~ if method in ['post', 'put', 'patch'] %}
+{%~ if method in ['post', 'put', 'patch'] and sample_data is not empty %}
 let data = {{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}
 
 {% endif -%}
-{% if method in ['post', 'put', 'patch'] %}
+{% if method in ['post', 'put', 'patch'] and sample_data is not empty %}
 request.httpBody = try? JSONSerialization.data(withJSONObject: data)
 {% endif %}
 

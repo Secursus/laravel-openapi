@@ -1,4 +1,4 @@
-{%~ if method in ['post', 'put', 'patch'] %}
+{%~ if method in ['post', 'put', 'patch'] and sample_data is not empty %}
 data = {{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}
 
 {% endif -%}
@@ -17,7 +17,7 @@ fetch('{{ base_url }}{{ uri }}', {
     {%~ endif -%}
 {% endif %}
     },
-{% if method in ['post', 'put', 'patch'] %}
+{% if method in ['post', 'put', 'patch'] and sample_data is not empty %}
     body: data
 {% endif %}
 })
