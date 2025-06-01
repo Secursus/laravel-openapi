@@ -72,6 +72,8 @@ class CodeSampleBuilder
         $base_url = rtrim($base_url, '/');
 
         $context = [
+            'bearer_example' => 'eyJ0eXAiOiJKV1QiLCJ...',
+            'basic_example' => 'API_KEY:API_SECRET_KEY',
             'method' => $route->method,
             'uri' => $route->uri,
             'base_url' => $base_url,

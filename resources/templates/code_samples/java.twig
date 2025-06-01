@@ -1,3 +1,25 @@
+{% if uri matches '{upload}' %}
+HttpClient client = HttpClient.newHttpClient();
+File file = new File("example.pdf");
+byte[] fileBytes = Files.readAllBytes(file.toPath());
+
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("{{ base_url }}{{ uri }}"))
+{% if security_enabled -%}
+    {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
+    .header("Authorization", "Basic {{ basic_example }}") // Or with Bearer {{ bearer_example }}
+    {%~ elseif 'BearerToken' in security_schemes %}
+        .header("Authorization", "Bearer {{ bearer_example }}")
+    {%~ elseif 'BasicAuth' in security_schemes %}
+        .header("Authorization", "Basic {{ basic_example }}")
+    {%~ endif -%}
+{% endif %}
+    .header("Content-Type", "application/pdf")
+    .POST(HttpRequest.BodyPublishers.ofByteArray(fileBytes))
+    .build();
+
+HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+{% else %}
 URL url = new URL("{{ base_url }}{{ uri }}");
 
 HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -5,11 +27,11 @@ con.setRequestMethod("{{ method|upper }}");
 con.setRequestProperty("Content-Type", "application/json;");
 {% if security_enabled -%}
     {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
-con.setRequestProperty("Authorization", "Basic API_KEY:API_SECRET_KEY"); # Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+con.setRequestProperty("Authorization", "Basic {{ basic_example }}"); // Or with Bearer {{ bearer_example }}
     {%~ elseif 'BearerToken' in security_schemes %}
-con.setRequestProperty("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJ...");
+con.setRequestProperty("Authorization", "Bearer {{ bearer_example }}");
     {%~ elseif 'BasicAuth' in security_schemes %}
-con.setRequestProperty("Authorization", "Basic API_KEY:API_SECRET_KEY");
+con.setRequestProperty("Authorization", "Basic {{ basic_example }}");
     {%~ endif -%}
 {% endif %}
 con.setDoOutput(true);
@@ -30,5 +52,5 @@ while ((responseLine = in.readLine()) != null) {
 }
 in.close();
 con.disconnect();
-
+{% endif %}
 System.out.println(response.toString());

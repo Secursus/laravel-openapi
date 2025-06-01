@@ -2,24 +2,31 @@ using var client = new HttpClient();
 client.DefaultRequestHeaders.Add("Content-Type", "application/json");
 {% if security_enabled -%}
     {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
-client.DefaultRequestHeaders.Add("Basic API_KEY:API_SECRET_KEY");  // Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+client.DefaultRequestHeaders.Add("Basic {{ basic_example }}");  // Or with Bearer {{ bearer_example }}
     {%~ elseif 'BearerToken' in security_schemes %}
-client.DefaultRequestHeaders.Add("Bearer eyJ0eXAiOiJKV1QiLCJ...");
+client.DefaultRequestHeaders.Add("Bearer {{ bearer_example }}");
     {%~ elseif 'BasicAuth' in security_schemes %}
-client.DefaultRequestHeaders.Add("Basic API_KEY:API_SECRET_KEY");
+client.DefaultRequestHeaders.Add("Basic {{ basic_example }}");
     {%~ endif -%}
 {% endif %}
+{% if uri matches '{upload}' %}
 
-{%~ if method in ['post', 'put', 'patch'] and sample_data is not empty %}
+var content = new MultipartFormDataContent();
+var fileBytes = File.ReadAllBytes("example.pdf");
+content.Add(new ByteArrayContent(fileBytes), "file", "example.pdf");
+
+{% else %}
+    {%~ if method in ['post', 'put', 'patch'] and sample_data is not empty %}
 var data = "{{ sample_data|json_encode(constant("JSON_PRETTY_PRINT"))|raw }}";
 var content = new StringContent(data, Encoding.UTF8, "application/json");
-{% endif -%}
-{%~ if method == 'patch' %}
+    {% endif -%}
+    {%~ if method == 'patch' %}
 var request = new HttpRequestMessage(new HttpMethod("{{ method|upper }}"), "{{ base_url }}{{ uri }}")
 {
     Content = content
 };
-{% endif -%}
+    {% endif -%}
+{% endif %}
 {% if method == 'get' %}
 var response = await client.GetAsync("{{ base_url }}{{ uri }}");
 {% elseif method == 'post' %}
