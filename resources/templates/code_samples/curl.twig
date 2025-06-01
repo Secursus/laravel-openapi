@@ -1,17 +1,17 @@
 {% set base_url = base_url|trim('/', 'right') %}
-curl -k -i \
--H "Content-Type: application/json" \
+curl
+-H "Content-Type: application/json"
 {% if security_enabled %}
     {%~ if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes -%}
-        -H "Authorization: Basic API_KEY:API_SECRET_KEY" \ # Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+        -H "Authorization: Basic API_KEY:API_SECRET_KEY" # Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
     {%~ elseif 'BearerToken' in security_schemes -%}
-        -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJ..." \
+        -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJ..."
     {%~ elseif 'BasicAuth' in security_schemes -%}
-        -H "Authorization: Basic API_KEY:API_SECRET_KEY" \
+        -H "Authorization: Basic API_KEY:API_SECRET_KEY"
     {% endif %}
 {% endif %}
--X {{ method|upper }} \
+-X {{ method|upper }}
 {%~ if method in ['post', 'put'] -%}
-    -d '{{ sample_data|json_encode|raw }}' \
+    -d '{{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}'
 {% endif -%}
 "{{ base_url }}{{ uri }}"
