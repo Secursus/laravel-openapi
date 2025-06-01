@@ -19,6 +19,8 @@ class Operation
     public ?string $method;
 
     public ?array $servers;
+    public ?array $requestSchema = null;
+    public ?array $responseSchema = null;
 
     /**
      * @param  string|null  $id
@@ -28,11 +30,13 @@ class Operation
      *
      * @throws InvalidArgumentException
      */
-    public function __construct(string $id = null, array $tags = [], string $security = null, string $method = null, array $servers = null)
+    public function __construct(string $id = null, array $tags = [], string $security = null, string $method = null, array $servers = null, ?array $requestSchema = null, ?array $responseSchema = null)
     {
         $this->id = $id;
         $this->tags = $tags;
         $this->method = $method;
+        $this->requestSchema = $requestSchema;
+        $this->responseSchema = $responseSchema;
         $this->servers = $servers;
 
         if ($security === '') {
