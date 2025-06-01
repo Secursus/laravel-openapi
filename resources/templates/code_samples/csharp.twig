@@ -2,7 +2,7 @@ using var client = new HttpClient();
 client.DefaultRequestHeaders.Add("Content-Type", "application/json");
 {% if security_enabled -%}
     {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
-client.DefaultRequestHeaders.Add("Basic API_KEY:API_SECRET_KEY");  # Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+client.DefaultRequestHeaders.Add("Basic API_KEY:API_SECRET_KEY");  // Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
     {%~ elseif 'BearerToken' in security_schemes %}
 client.DefaultRequestHeaders.Add("Bearer eyJ0eXAiOiJKV1QiLCJ...");
     {%~ elseif 'BasicAuth' in security_schemes %}
@@ -11,7 +11,7 @@ client.DefaultRequestHeaders.Add("Basic API_KEY:API_SECRET_KEY");
 {% endif %}
 
 {%~ if method in ['post', 'put', 'patch'] %}
-var data = '{{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}';
+var data = "{{ sample_data|json_encode(constant("JSON_PRETTY_PRINT"))|raw }}";
 var content = new StringContent(data, Encoding.UTF8, "application/json");
 {% endif -%}
 {%~ if method == 'patch' %}
@@ -25,11 +25,11 @@ var response = await client.GetAsync("{{ base_url }}{{ uri }}");
 {% elseif method == 'post' %}
 var response = await client.PostAsync("{{ base_url }}{{ uri }}", content);
 {% elseif method == 'put' %}
-var response = await client.putAsync("{{ base_url }}{{ uri }}", content);
+var response = await client.PutAsync("{{ base_url }}{{ uri }}", content);
 {% elseif method == 'patch' %}
-var response = await client.SendAsync(content);
+var response = await client.SendAsync(request);
 {% elseif method == 'delete' %}
-var response = await client.DeleteAsync("{{ base_url }}{{ uri }}");s
+var response = await client.DeleteAsync("{{ base_url }}{{ uri }}");
 {% endif %}
 
 string result = await response.Content.ReadAsStringAsync();
