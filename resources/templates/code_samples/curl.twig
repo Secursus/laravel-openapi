@@ -1,17 +1,23 @@
 {% set base_url = base_url|trim('/', 'right') %}
 curl
+{% if uri matches '{upload}' %}
+-H "Content-Type: application/pdf"
+{% else %}
 -H "Content-Type: application/json"
+{% endif %}
 {% if security_enabled %}
     {%~ if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes -%}
-        -H "Authorization: Basic API_KEY:API_SECRET_KEY" # Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+        -H "Authorization: Basic {{ basic_example }}" # Or with Bearer {{ bearer_example }}
     {%~ elseif 'BearerToken' in security_schemes -%}
-        -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJ..."
+        -H "Authorization: Bearer {{ bearer_example }}"
     {%~ elseif 'BasicAuth' in security_schemes -%}
-        -H "Authorization: Basic API_KEY:API_SECRET_KEY"
+        -H "Authorization: Basic {{ basic_example }}"
     {% endif %}
 {% endif %}
 -X {{ method|upper }}
-{%~ if method in ['post', 'put', 'patch'] and sample_data is not empty -%}
-    -d '{{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}'
+{% if uri matches '{upload}' %}
+--data-binary "@example.pdf"
+{%~ elseif method in ['post', 'put', 'patch'] and sample_data is not empty -%}
+-d '{{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}'
 {% endif -%}
 "{{ base_url }}{{ uri }}"

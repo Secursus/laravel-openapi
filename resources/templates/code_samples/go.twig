@@ -1,25 +1,41 @@
 client := &http.Client{}
-{%~ if method in ['post', 'put', 'patch'] %}
+{%~ if uri matches '{upload}' %}
+file, _ := os.Open("example.pdf")
+defer file.Close()
+
+body := &bytes.Buffer{}
+writer := multipart.NewWriter(body)
+part, _ := writer.CreateFormFile("file", "example.pdf")
+io.Copy(part, file)
+writer.Close()
+{%~ elseif method in ['post', 'put', 'patch'] %}
 jsonData := []byte(`{{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}`)
 {% endif ~%}
 req, _ := http.NewRequest(
     "{{ method|upper }}",
     "{{ base_url }}{{ uri }}",
-{% if method in ['post', 'put', 'patch'] and sample_data is not empty %}
+{% if uri matches '{upload}' %}
+    body
+{% elseif method in ['post', 'put', 'patch'] and sample_data is not empty %}
     bytes.NewBuffer(jsonData)
 {% else %}
     nil
 {% endif %}
 )
 
+{% if uri matches '{upload}' %}
+req.Header.Add("Content-Type", writer.FormDataContentType())
+{% else %}
 req.Header.Add("Content-Type", "application/json")
+{% endif %}
+
 {% if security_enabled -%}
     {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
-req.Header.Add("Authorization", "Basic API_KEY:API_SECRET_KEY") # Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+req.Header.Add("Authorization", "Basic {{ basic_example }}") # Or with Bearer {{ bearer_example }}
     {%~ elseif 'BearerToken' in security_schemes %}
-req.Header.Add("Authorization", "Bearer eyJ0eXAiOiJKV1QiLCJ...")
+req.Header.Add("Authorization", "Bearer {{ bearer_example }}")
     {%~ elseif 'BasicAuth' in security_schemes %}
-req.Header.Add("Authorization", "Bearer API_KEY:API_SECRET_KEY")
+req.Header.Add("Authorization", "Bearer {{ basic_example }}")
     {%~ endif -%}
 {% endif %}
 

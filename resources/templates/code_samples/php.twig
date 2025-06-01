@@ -1,7 +1,8 @@
 <?
-{%~ if method in ['post', 'put', 'patch'] and sample_data is not empty %}
+{%~ if uri matches '{upload}' %}
+$file = new CURLFile('example.pdf', 'application/pdf', 'example.pdf');
+{%~ elseif method in ['post', 'put', 'patch'] and sample_data is not empty -%}
 $data = json_decode('{{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}');
-
 {% endif -%}
 
 $ch = curl_init("{{ base_url }}{{ uri }}");
@@ -16,17 +17,19 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json',
 {% if security_enabled -%}
     {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
-    'Authorization: Basic API_KEY:API_SECRET_KEY' // Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+    'Authorization: Basic {{ basic_example }}' // Or with Bearer {{ bearer_example }}
     {%~ elseif 'BearerToken' in security_schemes %}
-    'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJ...'
+    'Authorization: Bearer {{ bearer_example }}'
     {%~ elseif 'BasicAuth' in security_schemes %}
-    'Authorization: Basic API_KEY:API_SECRET_KEY'
+    'Authorization: Basic {{ basic_example }}'
     {%~ endif -%}
 {% endif %}
 ]);
-{% if method in ['post', 'put', 'patch']  and sample_data is not empty %}
+{%~ if uri matches '{upload}' %}
+curl_setopt($ch, CURLOPT_POSTFIELDS, ['file' => $file]);
+{%~ elseif method in ['post', 'put', 'patch'] and sample_data is not empty -%}
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-{% endif %}
+{% endif -%}
 
 $response = curl_exec($ch);
 curl_close($ch);

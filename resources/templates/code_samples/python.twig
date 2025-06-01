@@ -10,11 +10,11 @@ headers = {
     "Content-Type": "application/json",
 {% if security_enabled -%}
     {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
-    "Authorization": 'Basic API_KEY:API_SECRET_KEY', # Or with Bearer eyJ0eXAiOiJKV1QiLCJ...
+    "Authorization": 'Basic {{ basic_example }}', # Or with Bearer {{ bearer_example }}
     {%~ elseif 'BearerToken' in security_schemes %}
-    "Authorization" 'Bearer eyJ0eXAiOiJKV1QiLCJ...'
+    "Authorization" 'Bearer {{ bearer_example }}'
     {%~ elseif 'BasicAuth' in security_schemes %}
-    "Authorization": 'Basic API_KEY:API_SECRET_KEY'
+    "Authorization": 'Basic {{ basic_example }}'
     {%~ endif -%}
 {% endif %}
 }
@@ -29,3 +29,17 @@ response = requests.{{ method }}(
 
 print(response.status_code)
 print(response.json())
+
+{% if uri matches '{upload}' %}
+# Exemple pour l'upload de fichier
+url = "{{ base_url }}{{ uri|replace({'{order_id}': '12345', '{item_type_key}': 'damage'}) }}"
+headers = {
+    "Authorization": "Bearer token"
+}
+files = {'file': open('example.pdf', 'rb')}
+
+response = requests.post(url, headers=headers, files=files)
+
+print(response.status_code)
+print(response.json())
+{% endif %}
