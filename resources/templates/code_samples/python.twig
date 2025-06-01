@@ -1,6 +1,6 @@
 import requests
 
-{%~ if method in ['post', 'put', 'patch'] %}
+{%~ if method in ['post', 'put', 'patch'] and sample_data is not empty %}
 data = {{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}
 
 {% endif -%}
@@ -22,7 +22,7 @@ headers = {
 response = requests.{{ method }}(
     url,
     headers=headers,
-{% if method in ['post', 'put', 'patch'] %}
+{% if method in ['post', 'put', 'patch']  and sample_data is not empty %}
     json=data
 {% endif %}
 )

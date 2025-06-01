@@ -1,5 +1,5 @@
 <?
-{%~ if method in ['post', 'put', 'patch'] %}
+{%~ if method in ['post', 'put', 'patch'] and sample_data is not empty %}
 $data = json_decode('{{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}');
 
 {% endif -%}
@@ -24,7 +24,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
     {%~ endif -%}
 {% endif %}
 ]);
-{% if method in ['post', 'put', 'patch'] %}
+{% if method in ['post', 'put', 'patch']  and sample_data is not empty %}
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 {% endif %}
 

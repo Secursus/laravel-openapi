@@ -1,12 +1,12 @@
 require 'rest-client'
 
-{%~ if method in ['post', 'put', 'patch'] %}
+{%~ if method in ['post', 'put', 'patch'] and sample_data is not empty %}
 payload = {{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}
 
 {% endif -%}
 
 response = RestClient.{{ method }} '{{ base_url }}{{ uri }}',
-{%~ if method in ['post', 'put', 'patch'] %}
+{%~ if method in ['post', 'put', 'patch'] and sample_data is not empty %}
     payload.to_json,
 {% endif %}
     {

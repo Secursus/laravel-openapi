@@ -87,7 +87,6 @@ class CodeSampleBuilder
             'python' => ['lang' => 'py', 'label' => 'Python'],
             'java' => ['lang' => 'java', 'label' => 'Java'],
             'csharp' => ['lang' => 'csharp', 'label' => 'C#'],
-            'objective' => ['lang' => 'csharp', 'label' => 'Objective-C'],
             'swift' => ['lang' => 'csharp', 'label' => 'Swift'],
             'ruby' => ['lang' => 'go', 'label' => 'Ruby'],
             'go' => ['lang' => 'go', 'label' => 'Go'],
@@ -150,9 +149,6 @@ class CodeSampleBuilder
 
     protected function generateFromFaker(): array
     {
-        return [
-            'id' => $this->faker->randomNumber(),
-            'email' => $this->faker->email
-        ];
+        return [];
     }
 }

@@ -14,7 +14,7 @@ con.setRequestProperty("Authorization", "Basic API_KEY:API_SECRET_KEY");
 {% endif %}
 con.setDoOutput(true);
 
-{%~ if method in ['post', 'put', 'patch'] %}
+{%~ if method in ['post', 'put', 'patch'] and sample_data is not empty %}
 String jsonInputString = '{{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}';
 try (OutputStream os = con.getOutputStream()) {
     byte[] input = jsonInputString.getBytes("utf-8");
