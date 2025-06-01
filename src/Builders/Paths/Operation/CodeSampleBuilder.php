@@ -104,22 +104,55 @@ class CodeSampleBuilder
 
     protected function generateSampleData(RouteInformation $route): array
     {
-        if ($route->requestSchema) {
-            $resolver = new SchemaResolver();
-            return $resolver->resolve($route->requestSchema);
+        if ($route->requestBodyInstance && 
+            property_exists($route->requestBodyInstance, 'content') && 
+            $route->requestBodyInstance->content && 
+            is_array($route->requestBodyInstance->content)) {
+            
+            $targetMediaTypeString = 'application/json';
+            $foundMediaType = null;
+            
+            foreach ($route->requestBodyInstance->content as $index => $mediaTypeObject) {
+                if ($mediaTypeObject instanceof \GoldSpecDigital\ObjectOrientedOAS\Objects\MediaType) {
+                    $currentMediaType = $mediaTypeObject->mediaType; 
+                    if ($currentMediaType === $targetMediaTypeString) {
+                        $foundMediaType = $mediaTypeObject;
+                        break;
+                    }
+                }
+            }
+
+            if ($foundMediaType) {
+                if (property_exists($foundMediaType, 'example') && $foundMediaType->example) {
+                    $exampleValue = $foundMediaType->example;
+                    if ($foundMediaType->example instanceof \GoldSpecDigital\ObjectOrientedOAS\Objects\Example) {
+                        $exampleValue = $foundMediaType->example->value;
+                    }
+                    
+                    if (is_array($exampleValue)) {
+                        return $exampleValue;
+                    }
+                }
+            }
         }
 
+        if ($route->requestSchema) {
+            $resolver = new SchemaResolver();
+            $resolvedExample = $resolver->resolve($route->requestSchema); 
+            
+            if (is_array($resolvedExample)) {
+                return $resolvedExample;
+            }
+        }
+
+        return $this->generateFromFaker();
+    }
+
+    protected function generateFromFaker(): array
+    {
         return [
             'id' => $this->faker->randomNumber(),
-            'name' => $this->faker->name,
-            'email' => $this->faker->email,
-            'phone' => $this->faker->phoneNumber,
-            'address' => [
-                'street' => $this->faker->streetAddress,
-                'city' => $this->faker->city,
-                'zipcode' => $this->faker->postcode
-            ],
-            'created_at' => $this->faker->dateTimeThisYear->format('Y-m-d H:i:s')
+            'email' => $this->faker->email
         ];
     }
 }

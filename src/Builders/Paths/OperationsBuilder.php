@@ -63,8 +63,8 @@ class OperationsBuilder
             $operationAttribute = $route->actionAttributes
                 ->first(static fn(object $attribute) => $attribute instanceof OperationAttribute);
 
-            $route->requestSchema = $operationAttribute->requestSchema;
-            $route->responseSchema = $operationAttribute->responseSchema;
+            $route->requestSchema = $operationAttribute->requestSchema ?? null;
+            $route->responseSchema = $operationAttribute->responseSchema; // This seems to be OperationAttribute specific, not from RequestBody
             $operationId = optional($operationAttribute)->id;
             $tags = $operationAttribute->tags ?? [];
             $servers = collect($operationAttribute->servers)
@@ -73,8 +73,46 @@ class OperationsBuilder
                 ->toArray();
 
             $parameters = $this->parametersBuilder->build($route);
-            $codeSample = $this->codeSampleBuilder->build($route);
             $requestBody = $this->requestBodyBuilder->build($route);
+            $route->requestBodyInstance = $requestBody; // Assign instance to RouteInformation
+
+            if ($requestBody) {
+                
+                if ($requestBody->content === null) {
+                } else {
+                    
+                    $targetMediaTypeString = 'application/json';
+                    $foundMediaTypeObject = null;
+
+                    if (is_array($requestBody->content)) {
+                        foreach ($requestBody->content as $index => $mediaTypeObject) {
+                            if ($mediaTypeObject instanceof \GoldSpecDigital\ObjectOrientedOAS\Objects\MediaType) {
+                                $currentMediaTypeString = $mediaTypeObject->mediaType;
+                                if ($currentMediaTypeString === $targetMediaTypeString) {
+                                    $foundMediaTypeObject = $mediaTypeObject;
+                                    break; 
+                                }
+                            } else {
+                            }
+                        }
+                    } else {
+                    }
+
+                    if ($foundMediaTypeObject) {
+                        // Vérifier si la propriété 'schema' existe et n'est pas nulle sur l'objet MediaType trouvé
+                        if (property_exists($foundMediaTypeObject, 'schema') && $foundMediaTypeObject->schema) {
+                            // Assigner la version tableau du schéma
+                            $route->requestSchema = $foundMediaTypeObject->schema->toArray();
+                        } else {
+                        }
+                    } else {
+                    }
+                }
+            } else {
+            }
+
+            $codeSample = $this->codeSampleBuilder->build($route);
+
             $responses = $this->responsesBuilder->build($route);
             $callbacks = $this->callbacksBuilder->build($route);
             $security = $this->securityBuilder->build($route);

@@ -14,6 +14,7 @@ use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionParameter;
+use GoldSpecDigital\ObjectOrientedOAS\Objects\RequestBody;
 
 class RouteInformation
 {
@@ -37,8 +38,9 @@ class RouteInformation
     public Collection|array $actionAttributes;
 
     public ?DocBlock $actionDocBlock;
-public ?array $requestSchema = null;
+    public ?array $requestSchema = null;
     public ?array $responseSchema = null;
+    public ?RequestBody $requestBodyInstance = null;
 
     /**
      * @param  Route  $route
