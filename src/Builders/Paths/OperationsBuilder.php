@@ -63,6 +63,8 @@ class OperationsBuilder
             $operationAttribute = $route->actionAttributes
                 ->first(static fn(object $attribute) => $attribute instanceof OperationAttribute);
 
+            $route->requestSchema = $operationAttribute->requestSchema;
+            $route->responseSchema = $operationAttribute->responseSchema;
             $operationId = optional($operationAttribute)->id;
             $tags = $operationAttribute->tags ?? [];
             $servers = collect($operationAttribute->servers)
@@ -90,7 +92,6 @@ class OperationsBuilder
                 ->callbacks(...$callbacks)
                 ->servers(...$servers);
 
-            /** Not the cleanest code, we need to call notSecurity instead of security when our security has been turned off */
             if (count($security) === 1 && $security[0]->securityScheme === null) {
                 $operation = $operation->noSecurity();
             } else {

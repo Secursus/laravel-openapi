@@ -37,6 +37,8 @@ class RouteInformation
     public Collection|array $actionAttributes;
 
     public ?DocBlock $actionDocBlock;
+public ?array $requestSchema = null;
+    public ?array $responseSchema = null;
 
     /**
      * @param  Route  $route

@@ -3,19 +3,24 @@
 namespace Vyuldashev\LaravelOpenApi\Builders\Paths\Operation;
 
 use Vyuldashev\LaravelOpenApi\Attributes\CodeSample as CodeSampleAttribute;
+use Vyuldashev\LaravelOpenApi\Attributes\Security;
+use Vyuldashev\LaravelOpenApi\SchemaResolver;
 use Vyuldashev\LaravelOpenApi\RouteInformation;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
+use Faker\Factory;
 
 class CodeSampleBuilder
 {
     protected $twig;
+    protected $faker;
 
     public function __construct()
     {
         $template_path = __DIR__ . '/../../../../resources/templates/code_samples';
         $loader = new FilesystemLoader($template_path);
         $this->twig = new Environment($loader);
+        $this->faker = Factory::create();
     }
 
     public function build(RouteInformation $route): ?array
@@ -25,10 +30,11 @@ class CodeSampleBuilder
 
         $security_attributes = $route->actionAttributes
             ->filter(static function ($attribute) {
-                return $attribute instanceof \Vyuldashev\LaravelOpenApi\Attributes\Security;
+                return $attribute instanceof Security;
             });
 
         if ($security_attributes->count() > 0) {
+            /** @var Security $security_attribute */
             $security_attribute = $security_attributes->first();
             $security_enabled = $security_attribute->enabled;
             if ($security_enabled) {
@@ -71,7 +77,7 @@ class CodeSampleBuilder
             'base_url' => $base_url,
             'security_enabled' => $security_enabled,
             'security_schemes' => $security_schemes,
-            'sample_data' => ['field_1' => 'xyz', 'field_2' => 'abc']
+            'sample_data' => $this->generateSampleData($route)
         ];
 
         $languageMap = [
@@ -93,6 +99,27 @@ class CodeSampleBuilder
             'lang' => $languageMap[$lang]['lang'] ?? $lang,
             'label' => $languageMap[$lang]['label'] ?? ucfirst($lang),
             'source' => $template
+        ];
+    }
+
+    protected function generateSampleData(RouteInformation $route): array
+    {
+        if ($route->requestSchema) {
+            $resolver = new SchemaResolver();
+            return $resolver->resolve($route->requestSchema);
+        }
+
+        return [
+            'id' => $this->faker->randomNumber(),
+            'name' => $this->faker->name,
+            'email' => $this->faker->email,
+            'phone' => $this->faker->phoneNumber,
+            'address' => [
+                'street' => $this->faker->streetAddress,
+                'city' => $this->faker->city,
+                'zipcode' => $this->faker->postcode
+            ],
+            'created_at' => $this->faker->dateTimeThisYear->format('Y-m-d H:i:s')
         ];
     }
 }
