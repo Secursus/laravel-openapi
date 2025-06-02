@@ -8,7 +8,12 @@ data = {{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}
 fetch('{{ base_url }}{{ uri }}', {
     method: '{{ method|upper }}',
     headers: {
+{%~ if uri matches '{upload}' %}
+        'Content-Type': 'application/pdf',
+        'Content-Length': '123456',
+{%~ else %}
         'Content-Type': 'application/json',
+{% endif -%}
 {% if security_enabled -%}
     {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
         'Authorization': 'Basic {{ basic_example }}', // Or with Bearer {{ bearer_example }}

@@ -25,6 +25,7 @@ req, _ := http.NewRequest(
 
 {% if uri matches '{upload}' %}
 req.Header.Add("Content-Type", writer.FormDataContentType())
+req.Header.Add("Content-Length", fmt.Sprintf("%d", body.Len()))
 {% else %}
 req.Header.Add("Content-Type", "application/json")
 {% endif %}

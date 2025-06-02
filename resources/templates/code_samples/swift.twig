@@ -5,6 +5,7 @@ var request = URLRequest(url: url)
 request.httpMethod = "{{ method|upper }}"
 {%~ if uri matches '{upload}' %}
 request.setValue("application/pdf", forHTTPHeaderField: "Content-Type")
+request.setValue("123456", forHTTPHeaderField: "Content-Length")
 {%~ elseif method in ['post', 'put', 'patch'] and sample_data is not empty %}
 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 {% endif -%}

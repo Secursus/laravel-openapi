@@ -15,6 +15,7 @@ HttpRequest request = HttpRequest.newBuilder()
     {%~ endif -%}
 {% endif %}
     .header("Content-Type", "application/pdf")
+    .header("Content-Length", String.valueOf(fileBytes.length))
     .POST(HttpRequest.BodyPublishers.ofByteArray(fileBytes))
     .build();
 
