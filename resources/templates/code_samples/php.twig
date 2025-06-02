@@ -14,7 +14,12 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "{{ method|upper }}");
 {% endif %}
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
+{%~ if uri matches '{upload}' %}
+    'Content-Type: application/pdf',
+    'Content-Length: 123456',
+{% else %}
     'Content-Type: application/json',
+{% endif -%}
 {% if security_enabled -%}
     {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
     'Authorization: Basic {{ basic_example }}' // Or with Bearer {{ bearer_example }}
@@ -28,7 +33,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 {%~ if uri matches '{upload}' %}
 curl_setopt($ch, CURLOPT_POSTFIELDS, ['file' => $file]);
 {%~ elseif method in ['post', 'put', 'patch'] and sample_data is not empty -%}
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 {% endif -%}
 
 $response = curl_exec($ch);

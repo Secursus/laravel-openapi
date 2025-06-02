@@ -2,6 +2,7 @@
 curl
 {% if uri matches '{upload}' %}
 -H "Content-Type: application/pdf"
+-H "Content-Length: 123456"
 {% else %}
 -H "Content-Type: application/json"
 {% endif %}

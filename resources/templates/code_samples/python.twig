@@ -1,27 +1,32 @@
 import requests
 
 {%~ if method in ['post', 'put', 'patch'] and sample_data is not empty %}
-data = {{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}
+    data = {{ sample_data|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}
 
 {% endif -%}
 
 url = "{{ base_url }}{{ uri }}"
 headers = {
-    "Content-Type": "application/json",
+{%~ if uri matches '{upload}' %}
+    'Content-Type': 'application/pdf',
+    'Content-Length': '123456',
+{%~ else %}
+    'Content-Type': 'application/json',
+{% endif -%}
 {% if security_enabled -%}
     {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
-    "Authorization": 'Basic {{ basic_example }}', # Or with Bearer {{ bearer_example }}
+        "Authorization": 'Basic {{ basic_example }}', # Or with Bearer {{ bearer_example }}
     {%~ elseif 'BearerToken' in security_schemes %}
-    "Authorization" 'Bearer {{ bearer_example }}'
+        "Authorization" 'Bearer {{ bearer_example }}'
     {%~ elseif 'BasicAuth' in security_schemes %}
-    "Authorization": 'Basic {{ basic_example }}'
+        "Authorization": 'Basic {{ basic_example }}'
     {%~ endif -%}
 {% endif %}
 }
 
 response = requests.{{ method }}(
-    url,
-    headers=headers,
+url,
+headers=headers,
 {% if method in ['post', 'put', 'patch']  and sample_data is not empty %}
     json=data
 {% endif %}
@@ -31,15 +36,14 @@ print(response.status_code)
 print(response.json())
 
 {% if uri matches '{upload}' %}
-# Exemple pour l'upload de fichier
-url = "{{ base_url }}{{ uri|replace({'{order_id}': '12345', '{item_type_key}': 'damage'}) }}"
-headers = {
+    url = "{{ base_url }}{{ uri|replace({'{order_id}': '12345', '{item_type_key}': 'damage'}) }}"
+    headers = {
     "Authorization": "Bearer token"
-}
-files = {'file': open('example.pdf', 'rb')}
+    }
+    files = {'file': open('example.pdf', 'rb')}
 
-response = requests.post(url, headers=headers, files=files)
+    response = requests.post(url, headers=headers, files=files)
 
-print(response.status_code)
-print(response.json())
+    print(response.status_code)
+    print(response.json())
 {% endif %}

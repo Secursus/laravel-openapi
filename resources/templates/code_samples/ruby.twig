@@ -4,6 +4,7 @@ require 'uri'
 
 url = URI.parse("{{ base_url }}{{ uri }}")
 File.open("example.pdf", "rb") do |file|
+    file_content = file.read
     req = Net::HTTP::{{ method|lower|capitalize }}.new(url)
 {% if security_enabled -%}
     {% if 'BearerToken' in security_schemes and 'BasicAuth' in security_schemes %}
@@ -15,7 +16,8 @@ File.open("example.pdf", "rb") do |file|
     {%~ endif -%}
 {% endif %}
     req["Content-Type"] = "application/pdf"
-    req.body = file.read
+    req["Content-Length"] = file_content.bytesize.to_s
+    req.body = file_content
 
     response = Net::HTTP.start(url.host, url.port, use_ssl: url.scheme == 'https') do |http|
         http.request(req)
